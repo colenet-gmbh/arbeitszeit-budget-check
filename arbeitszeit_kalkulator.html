@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arbeitszeit-Kalkulator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --teal: #59B2A5; --teal-light: #e8f6f4; --teal-mid: #a8d8d2;
+    --teal-dark: #3a8a7e; --teal-deeper: #246b61;
+    --white: #ffffff; --off-white: #f8faf9; --surface: #f2f7f6;
+    --border: #d4e8e5; --border-light: #eaf3f1;
+    --text-primary: #1a2e2c; --text-secondary: #4a6b67; --text-muted: #7a9e9a;
+    --warn-bg: #fff8e6; --warn-text: #8a6200;
+    --ok-bg: #e8f6f4; --ok-text: #246b61;
+    --danger-bg: #fef0f0; --danger-text: #b83232;
+    --shadow-sm: 0 1px 3px rgba(89,178,165,0.08);
+    --radius: 12px; --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--off-white); color: var(--text-primary); min-height: 100vh; padding: 0 0 4rem; }
+
+  header { background: var(--teal); padding: 1.5rem 2rem; position: relative; overflow: hidden; }
+  header::after  { content:''; position:absolute; right:-40px; top:-40px; width:200px; height:200px; border-radius:50%; background:rgba(255,255,255,0.08); }
+  header::before { content:''; position:absolute; right:60px; bottom:-60px; width:150px; height:150px; border-radius:50%; background:rgba(255,255,255,0.05); }
+  header h1 { font-size:1.4rem; font-weight:600; color:#fff; letter-spacing:-0.02em; }
+  header p  { font-size:0.8rem; color:rgba(255,255,255,0.75); margin-top:2px; font-weight:300; }
+
+  .today-banner { background:var(--teal-deeper); padding:0.9rem 2rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+  .tb-label  { font-size:0.72rem; color:rgba(255,255,255,0.65); }
+  .tb-value  { font-family:'DM Mono',monospace; font-size:1.6rem; font-weight:500; color:#fff; line-height:1.1; }
+  .tb-sub    { font-size:0.72rem; color:rgba(255,255,255,0.6); margin-top:2px; }
+  .tb-right  { text-align:right; }
+  .tb-budget { font-size:0.78rem; color:rgba(255,255,255,0.75); font-family:'DM Mono',monospace; }
+
+  .container { max-width:680px; margin:0 auto; padding:1.5rem 1.25rem; }
+  .card { background:var(--white); border:1px solid var(--border-light); border-radius:var(--radius); padding:1.25rem 1.5rem; margin-bottom:1rem; box-shadow:var(--shadow-sm); }
+  .card-title { font-size:0.7rem; font-weight:600; color:var(--teal-dark); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:1.1rem; display:flex; align-items:center; gap:8px; }
+  .card-title::after { content:''; flex:1; height:1px; background:var(--border-light); }
+
+  .row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
+  .row3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:12px; }
+  .row2:last-child, .row3:last-child { margin-bottom:0; }
+
+  .field { display:flex; flex-direction:column; gap:5px; }
+  .field label { font-size:0.7rem; font-weight:500; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.04em; }
+  .field input { height:38px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--off-white); color:var(--text-primary); font-family:'DM Mono',monospace; font-size:0.9rem; padding:0 10px; transition:border-color 0.15s,background 0.15s; width:100%; }
+  .field input[readonly] { background:var(--surface); color:var(--text-secondary); cursor:default; }
+  .field input:not([readonly]):focus { outline:none; border-color:var(--teal); background:#fff; box-shadow:0 0 0 3px rgba(89,178,165,0.12); }
+  .field .hint { font-size:0.68rem; color:var(--text-muted); margin-top:1px; }
+
+  .inline-note { font-size:0.75rem; color:var(--text-secondary); margin-top:8px; padding:8px 12px; background:var(--teal-light); border-radius:var(--radius-sm); border-left:3px solid var(--teal); }
+
+  /* Stacked bar */
+  .stacked-bar-wrap { margin-top:10px; }
+  .stacked-bar { height:6px; border-radius:4px; background:var(--border-light); overflow:hidden; display:flex; }
+  .sb-spent   { background: #246b61; height:100%; transition:width 0.3s; }
+  .sb-reserve { background: #59B2A5; height:100%; transition:width 0.3s; }
+  .stacked-legend { display:flex; gap:14px; margin-top:6px; flex-wrap:wrap; }
+  .sl-item { display:flex; align-items:center; gap:5px; font-size:0.65rem; color:var(--text-muted); }
+  .sl-dot  { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
+  /* Metrics */
+  .results { margin-top:1.5rem; }
+  .results-header { font-size:0.7rem; font-weight:600; color:var(--teal-dark); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:1rem; }
+  .metric-grid { display:grid; grid-template-columns:1fr; gap:10px; margin-bottom:1.25rem; }
+  .metric-full { width:100%; }
+  .metric { background:var(--white); border:1px solid var(--border-light); border-radius:var(--radius); padding:1rem 1.25rem; box-shadow:var(--shadow-sm); }
+  .metric-label { font-size:0.65rem; font-weight:500; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); margin-bottom:6px; }
+  .metric-value { font-family:'DM Mono',monospace; font-size:1.15rem; font-weight:500; color:var(--text-primary); line-height:1.2; }
+  .metric-sub { font-size:0.65rem; color:var(--text-muted); margin-top:4px; }
+  .metric-value.danger { color:var(--danger-text); }
+  .metric-value.ok     { color:var(--ok-text); }
+
+  .budget-rows { margin-top:12px; display:flex; flex-direction:column; gap:0; }
+  .budget-row  { display:grid; grid-template-columns:12px 1fr auto auto; align-items:center; gap:10px; padding:7px 0; border-bottom:1px solid var(--border-light); }
+  .budget-row:last-child { border-bottom:none; }
+  .budget-row-available { padding-top:9px; }
+  .br-dot   { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .br-label { font-size:0.8rem; color:var(--text-secondary); }
+  .br-pct   { font-size:0.75rem; color:var(--text-muted); font-family:'DM Mono',monospace; text-align:right; min-width:36px; }
+  .br-val   { font-family:'DM Mono',monospace; font-size:0.9rem; font-weight:500; color:var(--text-primary); text-align:right; min-width:90px; }
+  .br-val.danger { color:var(--danger-text); }
+  .br-val.ok     { color:var(--ok-text); }
+
+  /* Month cards */
+  .month-cards { display:flex; flex-direction:column; gap:8px; }
+  .month-card { background:var(--white); border:1px solid var(--border-light); border-radius:var(--radius); padding:1rem 1.25rem; display:grid; grid-template-columns:1fr auto; align-items:start; gap:16px; box-shadow:var(--shadow-sm); }
+  .month-card.current-month { border-color:var(--teal); background:var(--teal-light); }
+  .month-card.past-month    { opacity:0.55; }
+  .month-name { font-size:0.9rem; font-weight:500; color:var(--text-primary); display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .month-tag  { font-size:0.62rem; font-weight:600; padding:2px 7px; border-radius:20px; text-transform:uppercase; letter-spacing:0.04em; }
+  .tag-current { background:var(--teal); color:#fff; }
+  .tag-past    { background:var(--surface); color:var(--text-muted); }
+  .tag-future  { background:var(--border-light); color:var(--text-secondary); }
+  .month-row1, .month-row2 { display:flex; gap:16px; flex-wrap:wrap; font-size:0.75rem; color:var(--text-secondary); }
+  .month-row2 { margin-top:5px; padding-top:5px; border-top:1px solid var(--border-light); }
+  .month-row1 span strong, .month-row2 span strong { color:var(--text-primary); font-family:'DM Mono',monospace; }
+  .total-hpd { display:flex; flex-direction:column; align-items:flex-end; gap:2px; }
+  .hpd-value { font-family:'DM Mono',monospace; font-size:1.5rem; font-weight:500; color:var(--teal-deeper); line-height:1; }
+  .hpd-label { font-size:0.65rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; }
+  .hpd-extra { font-size:0.7rem; color:var(--text-secondary); font-family:'DM Mono',monospace; margin-top:1px; }
+  .hpd-sollwert { font-size:0.65rem; color:var(--text-muted); margin-top:6px; text-align:right; line-height:1.3; max-width:110px; }
+  .badge { display:inline-block; font-size:0.65rem; font-weight:600; padding:3px 9px; border-radius:20px; text-transform:uppercase; letter-spacing:0.04em; }
+  .badge-ok     { background:var(--ok-bg);     color:var(--ok-text); }
+  .badge-warn   { background:var(--warn-bg);   color:var(--warn-text); }
+  .badge-danger { background:var(--danger-bg); color:var(--danger-text); }
+  .badge-past   { background:var(--surface);   color:var(--text-muted); }
+
+  /* Reserve rows */
+  /* Spent table */
+  .spent-header { display:grid; grid-template-columns:1fr 100px 100px 90px; gap:10px; padding:0 0 6px; font-size:0.68rem; font-weight:500; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid var(--border-light); margin-bottom:4px; }
+  .spent-row    { display:grid; grid-template-columns:1fr 100px 100px 90px; gap:10px; align-items:center; padding:6px 0; border-bottom:1px solid var(--border-light); }
+  .spent-row:last-child { border-bottom:none; }
+  .spent-month  { font-size:0.82rem; font-weight:500; color:var(--text-primary); }
+  .spent-cost   { font-size:0.75rem; color:var(--text-secondary); font-family:"DM Mono",monospace; text-align:right; }
+  .spent-row input { height:34px; }
+
+  .reserve-row { display:grid; grid-template-columns:28px 1fr 100px 90px; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border-light); }
+  .reserve-row:last-child { border-bottom:none; }
+  .reserve-month-label { font-size:0.82rem; font-weight:500; color:var(--text-primary); }
+  .reserve-cost-label  { font-size:0.75rem; color:var(--text-secondary); font-family:'DM Mono',monospace; text-align:right; }
+  .reserve-row.inactive .reserve-month-label { color:var(--text-muted); }
+  .cb-box { width:18px; height:18px; border:1.5px solid var(--border); border-radius:5px; background:var(--off-white); display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; transition:border-color 0.15s,background 0.15s; }
+  .cb-box.checked { background:var(--teal); border-color:var(--teal); }
+  .cb-box svg { display:none; }
+  .cb-box.checked svg { display:block; }
+
+  #toast { position:fixed; bottom:2rem; left:50%; transform:translateX(-50%) translateY(12px); background:var(--teal-deeper); color:#fff; padding:10px 20px; border-radius:99px; font-size:0.8rem; font-weight:500; opacity:0; pointer-events:none; transition:opacity 0.25s,transform 0.25s; white-space:nowrap; z-index:999; }
+  #toast.visible { opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Arbeitszeit-Kalkulator</h1>
+  <p>Quartalsplanung · Remote &amp; Vor Ort</p>
+</header>
+<div class="today-banner">
+  <div>
+    <div class="tb-label">Heute noch arbeiten</div>
+    <div class="tb-value" id="bannerHpd">–</div>
+    <div class="tb-sub"   id="bannerSub"></div>
+  </div>
+  <div class="tb-right">
+    <div class="tb-budget" id="bannerBudget"></div>
+  </div>
+</div>
+<div id="toast"></div>
+
+<div class="container">
+
+  <div class="card">
+    <p class="card-title">Grundkonfiguration</p>
+    <div class="row2">
+      <div class="field"><label>Gesamtbudget (€)</label><input type="number" id="budget" value="25000" step="100"></div>
+      <div class="field"><label>Aktuelles Datum</label><input type="date" id="today" readonly></div>
+    </div>
+    <div class="row3">
+      <div class="field">
+        <label>Tagessatz Remote (€)</label>
+        <input type="number" id="dayRateRemote" value="1020" step="10">
+      </div>
+      <div class="field">
+        <label>Tagessatz Vor Ort (€)</label>
+        <input type="number" id="dayRateOnsite" value="1120" step="10">
+      </div>
+      <div class="field">
+        <label>Stunden pro Tag</label>
+        <input type="number" id="hoursPerDay" value="8" step="0.5" min="1" max="12">
+        <span class="hint" id="rateHint">= 127,50 € / 140,00 € pro Stunde</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="card-title">Verfügbare Stunden je Monat</p>
+    <div class="row3" id="monthInputs"></div>
+    <p style="font-size:0.7rem;color:var(--text-muted);margin-top:4px;">Mo–Fr × Stunden/Tag, minus Feiertage &amp; Urlaub</p>
+  </div>
+
+  <div class="card">
+    <p class="card-title">Bereits geleistete Arbeitszeit</p>
+    <div id="spentMonthInputs"></div>
+    <div id="spentNote" class="inline-note" style="display:none"></div>
+  </div>
+
+  <div class="card">
+    <p class="card-title">Reservierung zukünftige Vor-Ort-Tage</p>
+    <p style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:1rem;">Aktiviere pro Monat ob ein Vor-Ort-Einsatz erwartet wird und wie viele Stunden.</p>
+    <div id="reserveMonthInputs"></div>
+    <div style="margin-top:1rem;padding-top:0.75rem;border-top:1px solid var(--border-light);display:flex;justify-content:space-between;align-items:center;">
+      <span style="font-size:0.75rem;color:var(--text-secondary);">Gesamt reserviert</span>
+      <span id="reserveTotalDisplay" style="font-family:'DM Mono',monospace;font-size:0.9rem;font-weight:500;color:var(--teal-deeper);">0h · 0 €</span>
+    </div>
+  </div>
+
+  <div class="results" id="results" style="display:none">
+    <p class="results-header">Ergebnis</p>
+    <div class="metric-grid" id="metricsTop"></div>
+    <div class="month-cards" id="monthCards"></div>
+  </div>
+
+</div>
+
+<script>
+const MONTH_NAMES = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+let QUARTER_MONTHS = [];
+
+function countWorkdays(year, month) {
+  let n = 0, d = new Date(year, month, 1);
+  while (d.getMonth() === month) { if (d.getDay() !== 0 && d.getDay() !== 6) n++; d.setDate(d.getDate()+1); }
+  return n;
+}
+
+function getCurrentQuarterKey() {
+  const d = new Date();
+  return d.getFullYear() + '-Q' + (Math.floor(d.getMonth()/3)+1);
+}
+
+function initMonths() {
+  const d = new Date(), m = d.getMonth(), y = d.getFullYear();
+  const qStart = Math.floor(m/3)*3;
+  QUARTER_MONTHS = [];
+  for (let i = 0; i < 3; i++) {
+    const mi = (qStart+i)%12, yi = y + Math.floor((qStart+i)/12);
+    QUARTER_MONTHS.push({ month: mi, year: yi });
+  }
+  renderMonthInputs();
+  renderReserveInputs();
+  renderSpentInputs();
+}
+
+function renderMonthInputs() {
+  const hpd = parseFloat(document.getElementById('hoursPerDay').value) || 8;
+  const c = document.getElementById('monthInputs');
+  c.innerHTML = '';
+  QUARTER_MONTHS.forEach((q, i) => {
+    const wd = countWorkdays(q.year, q.month);
+    const def = Math.round(wd * hpd);
+    c.innerHTML += `<div class="field">
+      <label>${MONTH_NAMES[q.month]}</label>
+      <input type="number" id="mh${i}" value="${def}" step="1" min="0">
+      <span class="hint">${wd} AT · ${def}h Standard</span>
+    </div>`;
+  });
+  QUARTER_MONTHS.forEach((_, i) =>
+    document.getElementById('mh'+i).addEventListener('input', () => { calc(); saveState(); })
+  );
+}
+
+function toggleReserve(i) {
+  const cb  = document.getElementById('rcb'+i);
+  const row = document.getElementById('rrow'+i);
+  const inp = document.getElementById('rh'+i);
+  cb.classList.toggle('checked');
+  const active = cb.classList.contains('checked');
+  row.classList.toggle('inactive', !active);
+  inp.style.opacity       = active ? '1'    : '0.35';
+  inp.style.pointerEvents = active ? 'auto' : 'none';
+  if (!active) inp.value = 0;
+  calc(); saveState();
+}
+
+function renderReserveInputs() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const c = document.getElementById('reserveMonthInputs');
+  c.innerHTML = '';
+  QUARTER_MONTHS.forEach((q, i) => {
+    const mEnd = new Date(q.year, q.month+1, 0);
+    if (mEnd < today) return;
+    c.innerHTML += `<div class="reserve-row inactive" id="rrow${i}">
+      <div class="cb-box" id="rcb${i}" onclick="toggleReserve(${i})">
+        <svg width="10" height="10" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="white" stroke-width="2.5" fill="none"/></svg>
+      </div>
+      <span class="reserve-month-label">${MONTH_NAMES[q.month]} ${q.year}</span>
+      <input type="number" id="rh${i}" value="8" step="1" min="0" style="opacity:0.35;pointer-events:none;" oninput="calc();saveState()">
+      <span class="reserve-cost-label" id="rcost${i}">0 €</span>
+    </div>`;
+  });
+}
+
+function renderSpentInputs() {
+  const c = document.getElementById('spentMonthInputs');
+  c.innerHTML = '';
+  // Header row
+  c.innerHTML += `<div class="spent-header">
+    <span></span>
+    <span>Remote (h)</span>
+    <span>Vor Ort (h)</span>
+    <span style="text-align:right">Kosten</span>
+  </div>`;
+  QUARTER_MONTHS.forEach((q, i) => {
+    c.innerHTML += `<div class="spent-row" id="srow${i}">
+      <span class="spent-month">${MONTH_NAMES[q.month]}</span>
+      <input type="number" id="sr${i}" value="0" step="0.5" min="0" oninput="calc();saveState()">
+      <input type="number" id="so${i}" value="0" step="0.5" min="0" oninput="calc();saveState()">
+      <span class="spent-cost" id="scost${i}">0 €</span>
+    </div>`;
+  });
+}
+
+function fmt(n)      { return n.toLocaleString('de-DE', {minimumFractionDigits:0, maximumFractionDigits:0}); }
+function fmtH(n)     { return n.toFixed(1)+'h'; }
+function fmtD(n, d)  { return n.toLocaleString('de-DE', {minimumFractionDigits:d, maximumFractionDigits:d}); }
+
+function distributeRemoteBudget(freeBudget, monthData, rR) {
+  const alloc = monthData.map(()=>0), locked = monthData.map(()=>false);
+  let left = freeBudget;
+  for (let iter = 0; iter < 10; iter++) {
+    const ul = monthData.map((_,i)=>i).filter(i=>!locked[i]);
+    if (!ul.length) break;
+    const tw = ul.reduce((s,i)=>s+monthData[i].weight, 0);
+    if (!tw) break;
+    let anyLock = false;
+    ul.forEach(i => {
+      const share = rR > 0 ? left*(monthData[i].weight/tw)/rR : 0;
+      if (share >= monthData[i].maxH) { alloc[i]=monthData[i].maxH; locked[i]=true; anyLock=true; }
+      else alloc[i] = Math.max(0, share);
+    });
+    if (!anyLock) break;
+    const lc = monthData.reduce((s,m,i)=>locked[i]?s+alloc[i]*rR:s, 0);
+    left = freeBudget - lc;
+  }
+  return alloc;
+}
+
+function calc() {
+  const budget = parseFloat(document.getElementById('budget').value)       || 0;
+  const drR    = parseFloat(document.getElementById('dayRateRemote').value) || 0;
+  const drO    = parseFloat(document.getElementById('dayRateOnsite').value) || 0;
+  const hpd    = parseFloat(document.getElementById('hoursPerDay').value)   || 8;
+  const rR = drR / hpd, rO = drO / hpd;
+  let spentR = 0, spentO = 0;
+  QUARTER_MONTHS.forEach((_,i) => {
+    spentR += parseFloat(document.getElementById('sr'+i)?.value) || 0;
+    spentO += parseFloat(document.getElementById('so'+i)?.value) || 0;
+  });
+  // Update per-month cost display
+  const rR_tmp = (parseFloat(document.getElementById('dayRateRemote').value)||0) / (parseFloat(document.getElementById('hoursPerDay').value)||8);
+  const rO_tmp = (parseFloat(document.getElementById('dayRateOnsite').value)||0) / (parseFloat(document.getElementById('hoursPerDay').value)||8);
+  QUARTER_MONTHS.forEach((_,i) => {
+    const el = document.getElementById('scost'+i);
+    const r = parseFloat(document.getElementById('sr'+i)?.value)||0;
+    const o = parseFloat(document.getElementById('so'+i)?.value)||0;
+    if (el) el.textContent = (r*rR_tmp + o*rO_tmp).toLocaleString('de-DE',{maximumFractionDigits:0}) + ' €';
+  });
+
+  document.getElementById('rateHint').textContent =
+    '= '+fmtD(rR,2)+' € / '+fmtD(rO,2)+' € pro Stunde';
+
+  const spentCost = spentR*rR + spentO*rO;
+
+  const reserveByIdx = {}; let totalReserveH = 0;
+  QUARTER_MONTHS.forEach((_,i) => {
+    const cb = document.getElementById('rcb'+i), inp = document.getElementById('rh'+i);
+    if (cb && cb.classList.contains('checked') && inp) {
+      const h = parseFloat(inp.value)||0; reserveByIdx[i]=h; totalReserveH+=h;
+    } else reserveByIdx[i]=0;
+  });
+  const totalReserveCost = totalReserveH * rO;
+
+  QUARTER_MONTHS.forEach((_,i) => {
+    const el = document.getElementById('rcost'+i);
+    if (el) el.textContent = fmt((reserveByIdx[i]||0)*rO)+' €';
+  });
+  const rTot = document.getElementById('reserveTotalDisplay');
+  if (rTot) rTot.textContent = fmtH(totalReserveH)+' · '+fmt(totalReserveCost)+' €';
+
+  const note = document.getElementById('spentNote');
+  if (spentR > 0 || spentO > 0) {
+    note.style.display = 'block';
+    note.textContent = 'Kosten bisher: '+fmt(spentCost)+' €'
+      +(spentR>0?' · '+fmtH(spentR)+' remote = '+fmt(spentR*rR)+' €':'')
+      +(spentO>0?' · '+fmtH(spentO)+' vor Ort = '+fmt(spentO*rO)+' €':'');
+  } else note.style.display = 'none';
+
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  const months = QUARTER_MONTHS.map((q,i) => {
+    const availH  = parseFloat(document.getElementById('mh'+i)?.value)||0;
+    const mStart  = new Date(q.year,q.month,1), mEnd = new Date(q.year,q.month+1,0);
+    const isPast  = mEnd < today;
+    const isCurrent = !isPast && mStart <= today;
+    const isFuture  = mStart > today;
+    let workdaysTotal = countWorkdays(q.year, q.month);
+    let workdaysRemaining = 0;
+    if (isCurrent) { const d=new Date(today); while(d<=mEnd){if(d.getDay()!==0&&d.getDay()!==6)workdaysRemaining++;d.setDate(d.getDate()+1);} }
+    else if (isFuture) workdaysRemaining = countWorkdays(q.year,q.month);
+    // Verbleibende verfügbare Stunden: availH anteilig nach verbleibenden Arbeitstagen
+    const availHRemaining = workdaysTotal > 0 ? availH * (workdaysRemaining / workdaysTotal) : 0;
+    return { ...q, availH, availHRemaining, isPast, isCurrent, isFuture, workdaysRemaining, reserveH: reserveByIdx[i]||0 };
+  });
+
+  const remaining  = months.filter(m=>!m.isPast);
+  const freeBudget = budget - spentCost - totalReserveCost;
+  const monthData  = remaining.map(m=>({...m, maxH: m.workdaysRemaining*hpd, weight: m.availHRemaining}));
+  const alloc      = distributeRemoteBudget(freeBudget, monthData, rR);
+
+  let ri = 0;
+  const finalMonths = months.map(m => {
+    if (m.isPast) return {...m, hAlloc:0, budgetAlloc:0, hPerDay:null, hpdOnsite:0};
+    const hAlloc  = alloc[ri]||0;
+    const budgetAlloc = hAlloc*rR + m.reserveH*rO;
+    const hPerDay = m.workdaysRemaining > 0 ? hAlloc/m.workdaysRemaining : null;
+    const hpdOnsite = m.workdaysRemaining > 0 ? m.reserveH/m.workdaysRemaining : 0;
+    ri++;
+    return {...m, hAlloc, budgetAlloc, hPerDay, hpdOnsite};
+  });
+
+  // ── Today banner ──
+  const isWeekend = today.getDay() === 0 || today.getDay() === 6;
+  const cur = finalMonths.find(m=>m.isCurrent);
+  if (isWeekend) {
+    // Find next workday
+    const next = new Date(today);
+    while (next.getDay() === 0 || next.getDay() === 6) next.setDate(next.getDate()+1);
+    const nextLabel = next.toLocaleDateString('de-DE', {weekday:'long', day:'numeric', month:'long'});
+    document.getElementById('bannerHpd').textContent    = 'Wochenende';
+    document.getElementById('bannerSub').textContent    = 'Nächster Arbeitstag: '+nextLabel;
+    document.getElementById('bannerBudget').textContent = cur && cur.hPerDay !== null ? 'Freies Budget: '+fmt(freeBudget)+' €' : '';
+  } else if (cur && cur.hPerDay !== null) {
+    document.getElementById('bannerHpd').textContent    = fmtD(cur.hPerDay,1)+'h remote';
+    const total = cur.hPerDay + cur.hpdOnsite;
+    document.getElementById('bannerSub').textContent    = cur.hpdOnsite > 0
+      ? '+ '+fmtD(cur.hpdOnsite,1)+'h vor Ort = '+fmtD(total,1)+'h gesamt'
+      : 'pro Arbeitstag · '+MONTH_NAMES[cur.month];
+    document.getElementById('bannerBudget').textContent = 'Verfügbares Budget: '+fmt(freeBudget)+' €';
+  } else {
+    document.getElementById('bannerHpd').textContent    = '–';
+    document.getElementById('bannerSub').textContent    = 'Kein laufender Monat';
+    document.getElementById('bannerBudget').textContent = '';
+  }
+
+  // ── Stacked bar ──
+  const pctS = budget>0 ? Math.min(100, spentCost/budget*100) : 0;
+  const pctR = budget>0 ? Math.min(100-pctS, totalReserveCost/budget*100) : 0;
+  const pctF = Math.max(0, 100-pctS-pctR);
+
+  // Monate mit aktiver Reservierung ermitteln
+  const reserveMonthNames = QUARTER_MONTHS
+    .map((q,i) => { const cb=document.getElementById('rcb'+i); return cb&&cb.classList.contains('checked') ? MONTH_NAMES[q.month] : null; })
+    .filter(Boolean);
+  const reserveMonthLabel = reserveMonthNames.length > 0 ? reserveMonthNames.join(' + ') : '–';
+
+  // ── Metrics – eine Karte ──
+  document.getElementById('metricsTop').innerHTML = `
+    <div class="metric metric-full">
+      <div class="metric-label">Budget-Überblick</div>
+      <div class="stacked-bar-wrap" style="margin-top:6px;">
+        <div class="stacked-bar">
+          <div class="sb-spent"   style="width:${pctS.toFixed(1)}%"></div>
+          <div class="sb-reserve" style="width:${pctR.toFixed(1)}%"></div>
+        </div>
+      </div>
+      <div class="budget-rows">
+        <div class="budget-row">
+          <span class="br-dot" style="background:#246b61"></span>
+          <span class="br-label">Verbraucht</span>
+          <span class="br-pct">${Math.round(pctS)}%</span>
+          <span class="br-val">${fmt(spentCost)} €</span>
+        </div>
+        <div class="budget-row">
+          <span class="br-dot" style="background:#59B2A5"></span>
+          <span class="br-label">Reserviert vor Ort</span>
+          <span class="br-pct">${Math.round(pctR)}%</span>
+          <span class="br-val">${fmt(totalReserveCost)} € <span style="font-weight:400;color:var(--text-muted);font-size:0.7rem;">${totalReserveH>0?'('+reserveMonthLabel+')':''}</span></span>
+        </div>
+        <div class="budget-row budget-row-available">
+          <span class="br-dot" style="background:var(--border)"></span>
+          <span class="br-label">Verfügbar</span>
+          <span class="br-pct">${Math.round(pctF)}%</span>
+          <span class="br-val ${freeBudget<0?'danger':'ok'}">${fmt(freeBudget)} €</span>
+        </div>
+      </div>
+    </div>`;
+
+  // ── Month cards ──
+  const cards = finalMonths.map(m => {
+    if (m.isPast) return `<div class="month-card past-month">
+      <div>
+        <div class="month-name">${MONTH_NAMES[m.month]} ${m.year} <span class="month-tag tag-past">Abgeschlossen</span></div>
+        <div class="month-row1"><span><strong>${fmtH(m.availH)}</strong> verfügbar</span></div>
+      </div>
+      <div class="total-hpd"><div class="hpd-value" style="color:var(--text-muted)">–</div><div class="hpd-label">h/Tag</div></div>
+    </div>`;
+
+    const hpdr  = m.hPerDay !== null ? m.hPerDay : 0;
+    const total = hpdr + m.hpdOnsite;
+    const tag   = m.isCurrent?'tag-current':'tag-future';
+    const label = m.isCurrent?'Laufend':'Geplant';
+    const cc    = m.isCurrent?'current-month':'';
+
+    return `<div class="month-card ${cc}">
+      <div>
+        <div class="month-name">${MONTH_NAMES[m.month]} ${m.year} <span class="month-tag ${tag}">${label}</span></div>
+        <div class="month-row1">
+          <span><strong>${fmtH(m.hAlloc)}</strong> remote</span>
+          ${m.reserveH>0?`<span><strong>${fmtH(m.reserveH)}</strong> vor Ort geplant</span>`:''}
+          <span><strong>${m.workdaysRemaining}</strong> Arbeitstage</span>
+        </div>
+        <div class="month-row2">
+          <span>Budget gesamt: <strong>${fmt(m.budgetAlloc)} €</strong></span>
+          ${m.reserveH>0?`<span>Ø gesamt: <strong>${fmtD(total,1)}h/Tag</strong></span>`:''}
+        </div>
+      </div>
+      <div class="total-hpd">
+        <div class="hpd-value">${m.hPerDay!==null?fmtD(hpdr,1):'–'}</div>
+        <div class="hpd-label">h/Tag remote</div>
+        ${m.hpdOnsite>0?`<div class="hpd-extra">+${fmtD(m.hpdOnsite,1)}h vor Ort</div>`:''}
+        <div class="hpd-sollwert">Sollwert für Budgetrahmen</div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('monthCards').innerHTML = cards.join('');
+  document.getElementById('results').style.display = 'block';
+}
+
+// ── localStorage ──────────────────────────────────────────────
+const LS_KEY = 'arbeitszeit_kalkulator_v2';
+
+function saveState() {
+  const state = { quarter: getCurrentQuarterKey() };
+  ['budget','dayRateRemote','dayRateOnsite','hoursPerDay'].forEach(id => {
+    const el = document.getElementById(id); if (el) state[id] = el.value;
+  });
+  state.months = QUARTER_MONTHS.map((_,i) => {
+    const cb=document.getElementById('rcb'+i), inp=document.getElementById('rh'+i), mh=document.getElementById('mh'+i);
+    const sr=document.getElementById('sr'+i), so=document.getElementById('so'+i);
+    return { availH: mh?mh.value:'', reserveActive: cb?cb.classList.contains('checked'):false, reserveH: inp?inp.value:0,
+             spentR: sr?sr.value:0, spentO: so?so.value:0 };
+  });
+  try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+function loadSavedState() {
+  let state; try { state=JSON.parse(localStorage.getItem(LS_KEY)); } catch(e) {}
+  if (!state) return;
+  const sameQ = state.quarter === getCurrentQuarterKey();
+  ['budget','dayRateRemote','dayRateOnsite','hoursPerDay'].forEach(id => {
+    const el=document.getElementById(id); if (el && state[id]!==undefined) el.value=state[id];
+  });
+  if (sameQ && state.months) {
+    state.months.forEach((m,i) => {
+      const mh=document.getElementById('mh'+i), cb=document.getElementById('rcb'+i),
+            inp=document.getElementById('rh'+i), row=document.getElementById('rrow'+i);
+      const sr=document.getElementById('sr'+i), so=document.getElementById('so'+i);
+      if (mh && m.availH!==undefined)  mh.value=m.availH;
+      if (inp && m.reserveH!==undefined) inp.value=m.reserveH;
+      if (sr && m.spentR!==undefined) sr.value=m.spentR;
+      if (so && m.spentO!==undefined) so.value=m.spentO;
+      if (cb && m.reserveActive) {
+        cb.classList.add('checked');
+        if (row) row.classList.remove('inactive');
+        if (inp) { inp.style.opacity='1'; inp.style.pointerEvents='auto'; }
+      }
+    });
+  }
+}
+
+// ── Init ─────────────────────────────────────────────────────
+document.getElementById('today').value = new Date().toISOString().split('T')[0];
+initMonths();
+loadSavedState();
+calc();
+
+['budget','dayRateRemote','dayRateOnsite'].forEach(id => {
+  const el=document.getElementById(id);
+  if (el) el.addEventListener('input', ()=>{ calc(); saveState(); });
+});
+document.getElementById('hoursPerDay').addEventListener('input', ()=>{ renderMonthInputs(); calc(); saveState(); });
+document.getElementById('monthInputs').addEventListener('input', ()=>{ calc(); saveState(); });
+document.getElementById('reserveMonthInputs').addEventListener('input', ()=>{ calc(); saveState(); });
+</script>
+</body>
+</html>
