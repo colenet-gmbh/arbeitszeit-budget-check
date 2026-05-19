@@ -4,6 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Arbeitszeit-Kalkulator</title>
+<script>
+(function(){
+  const c=document.createElement('canvas'); c.width=c.height=32;
+  const x=c.getContext('2d');
+  x.beginPath(); x.arc(16,16,16,0,Math.PI*2); x.fillStyle='#59B2A5'; x.fill();
+  x.beginPath(); x.arc(16,16,9,0,Math.PI*2); x.strokeStyle='white'; x.lineWidth=2; x.stroke();
+  x.lineCap='round'; x.strokeStyle='white'; x.lineWidth=2.5;
+  x.beginPath(); x.moveTo(16,10); x.lineTo(16,16); x.stroke();
+  x.beginPath(); x.moveTo(16,16); x.lineTo(20,19); x.stroke();
+  const l=document.createElement('link'); l.rel='icon'; l.href=c.toDataURL();
+  document.head.appendChild(l);
+})();
+</script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -135,7 +148,7 @@
 
 <header>
   <h1>Arbeitszeit-Kalkulator</h1>
-  <p>Quartalsplanung · Remote &amp; Vor Ort</p>
+  <p>Vertragsplanung · Remote &amp; Vor Ort</p>
 </header>
 <div class="today-banner">
   <div>
@@ -153,9 +166,10 @@
 
   <div class="card">
     <p class="card-title">Grundkonfiguration</p>
-    <div class="row2">
+    <div class="row3">
+      <div class="field"><label>Vertragsbeginn</label><input type="date" id="startDate"></div>
+      <div class="field"><label>Vertragsende</label><input type="date" id="endDate"></div>
       <div class="field"><label>Gesamtbudget (€)</label><input type="number" id="budget" value="25000" step="100"></div>
-      <div class="field"><label>Aktuelles Datum</label><input type="date" id="today" readonly></div>
     </div>
     <div class="row3">
       <div class="field">
@@ -214,18 +228,25 @@ function countWorkdays(year, month) {
   return n;
 }
 
-function getCurrentQuarterKey() {
-  const d = new Date();
-  return d.getFullYear() + '-Q' + (Math.floor(d.getMonth()/3)+1);
+function getContractKey() {
+  const s = document.getElementById('startDate')?.value || '';
+  const e = document.getElementById('endDate')?.value   || '';
+  return s + '_' + e;
 }
 
 function initMonths() {
-  const d = new Date(), m = d.getMonth(), y = d.getFullYear();
-  const qStart = Math.floor(m/3)*3;
+  const startVal = document.getElementById('startDate')?.value;
+  const endVal   = document.getElementById('endDate')?.value;
+  if (!startVal || !endVal) return;
+  const start = new Date(startVal + 'T00:00:00');
+  const end   = new Date(endVal   + 'T00:00:00');
+  if (start > end) return;
   QUARTER_MONTHS = [];
-  for (let i = 0; i < 3; i++) {
-    const mi = (qStart+i)%12, yi = y + Math.floor((qStart+i)/12);
-    QUARTER_MONTHS.push({ month: mi, year: yi });
+  let y = start.getFullYear(), m = start.getMonth();
+  const endY = end.getFullYear(), endM = end.getMonth();
+  while (y < endY || (y === endY && m <= endM)) {
+    QUARTER_MONTHS.push({ month: m, year: y });
+    m++; if (m > 11) { m = 0; y++; }
   }
   renderMonthInputs();
   renderReserveInputs();
@@ -518,11 +539,11 @@ function calc() {
 }
 
 // ── localStorage ──────────────────────────────────────────────
-const LS_KEY = 'arbeitszeit_kalkulator_v2';
+const LS_KEY = 'arbeitszeit_kalkulator_v3';
 
 function saveState() {
-  const state = { quarter: getCurrentQuarterKey() };
-  ['budget','dayRateRemote','dayRateOnsite','hoursPerDay'].forEach(id => {
+  const state = { contractKey: getContractKey() };
+  ['budget','dayRateRemote','dayRateOnsite','hoursPerDay','startDate','endDate'].forEach(id => {
     const el = document.getElementById(id); if (el) state[id] = el.value;
   });
   state.months = QUARTER_MONTHS.map((_,i) => {
@@ -537,11 +558,16 @@ function saveState() {
 function loadSavedState() {
   let state; try { state=JSON.parse(localStorage.getItem(LS_KEY)); } catch(e) {}
   if (!state) return;
-  const sameQ = state.quarter === getCurrentQuarterKey();
   ['budget','dayRateRemote','dayRateOnsite','hoursPerDay'].forEach(id => {
     const el=document.getElementById(id); if (el && state[id]!==undefined) el.value=state[id];
   });
-  if (sameQ && state.months) {
+  let datesChanged = false;
+  ['startDate','endDate'].forEach(id => {
+    const el=document.getElementById(id);
+    if (el && state[id]!==undefined && el.value !== state[id]) { el.value=state[id]; datesChanged=true; }
+  });
+  if (datesChanged) initMonths();
+  if (state.contractKey === getContractKey() && state.months) {
     state.months.forEach((m,i) => {
       const mh=document.getElementById('mh'+i), cb=document.getElementById('rcb'+i),
             inp=document.getElementById('rh'+i), row=document.getElementById('rrow'+i);
@@ -560,16 +586,24 @@ function loadSavedState() {
 }
 
 // ── Init ─────────────────────────────────────────────────────
-document.getElementById('today').value = new Date().toISOString().split('T')[0];
-initMonths();
-loadSavedState();
-calc();
+(function() {
+  const now = new Date();
+  const defStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const defEnd   = new Date(now.getFullYear(), now.getMonth()+3, 0);
+  document.getElementById('startDate').value = defStart.toISOString().split('T')[0];
+  document.getElementById('endDate').value   = defEnd.toISOString().split('T')[0];
+  initMonths();
+  loadSavedState();
+  calc();
+})();
 
 ['budget','dayRateRemote','dayRateOnsite'].forEach(id => {
   const el=document.getElementById(id);
   if (el) el.addEventListener('input', ()=>{ calc(); saveState(); });
 });
 document.getElementById('hoursPerDay').addEventListener('input', ()=>{ renderMonthInputs(); calc(); saveState(); });
+document.getElementById('startDate').addEventListener('change', ()=>{ initMonths(); calc(); saveState(); });
+document.getElementById('endDate').addEventListener('change',   ()=>{ initMonths(); calc(); saveState(); });
 document.getElementById('monthInputs').addEventListener('input', ()=>{ calc(); saveState(); });
 document.getElementById('reserveMonthInputs').addEventListener('input', ()=>{ calc(); saveState(); });
 </script>
