@@ -148,7 +148,7 @@
 
 <header>
   <h1>Arbeitszeit-Kalkulator</h1>
-  <p>Vertragsplanung · Remote &amp; Vor Ort</p>
+  <p>Vertragsplanung · Remote &amp; Vor Ort · <span id="versionLabel"></span></p>
 </header>
 <div class="today-banner">
   <div>
@@ -219,6 +219,7 @@
 </div>
 
 <script>
+const VERSION = '1.0';
 const MONTH_NAMES = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 let QUARTER_MONTHS = [];
 
@@ -592,6 +593,7 @@ function loadSavedState() {
   const defEnd   = new Date(now.getFullYear(), now.getMonth()+3, 0);
   document.getElementById('startDate').value = defStart.toISOString().split('T')[0];
   document.getElementById('endDate').value   = defEnd.toISOString().split('T')[0];
+  document.getElementById('versionLabel').textContent = 'v' + VERSION;
   initMonths();
   loadSavedState();
   calc();
