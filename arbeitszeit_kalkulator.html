@@ -403,8 +403,8 @@ function calc() {
   const months = QUARTER_MONTHS.map((q,i) => {
     const availH  = parseFloat(document.getElementById('mh'+i)?.value)||0;
     const mStart  = new Date(q.year,q.month,1), mEnd = new Date(q.year,q.month+1,0);
-    const isPast  = mEnd < today;
-    const isCurrent = !isPast && mStart <= today;
+    let isPast  = mEnd < today;
+    let isCurrent = !isPast && mStart <= today;
     const isFuture  = mStart > today;
     let workdaysTotal = countWorkdays(q.year, q.month);
     let workdaysRemaining = 0;
@@ -412,7 +412,11 @@ function calc() {
     else if (isFuture) workdaysRemaining = countWorkdays(q.year,q.month);
     // Verbleibende verfügbare Stunden: availH anteilig nach verbleibenden Arbeitstagen
     const availHRemaining = workdaysTotal > 0 ? availH * (workdaysRemaining / workdaysTotal) : 0;
-    return { ...q, availH, availHRemaining, isPast, isCurrent, isFuture, workdaysRemaining, reserveH: reserveByIdx[i]||0 };
+    // Wochenende am Monatsende: kein Arbeitstag mehr → Monat gilt als abgeschlossen
+    if (isCurrent && workdaysRemaining === 0) { isPast = true; isCurrent = false; }
+    const mSpentR = parseFloat(document.getElementById('sr'+i)?.value)||0;
+    const mSpentO = parseFloat(document.getElementById('so'+i)?.value)||0;
+    return { ...q, availH, availHRemaining, isPast, isCurrent, isFuture, workdaysRemaining, reserveH: reserveByIdx[i]||0, mSpentR, mSpentO };
   });
 
   const remaining  = months.filter(m=>!m.isPast);
@@ -500,13 +504,23 @@ function calc() {
 
   // ── Month cards ──
   const cards = finalMonths.map(m => {
-    if (m.isPast) return `<div class="month-card past-month">
+    if (m.isPast) {
+      const spentCostM = m.mSpentR*rR + m.mSpentO*rO;
+      const hasSpent = m.mSpentR > 0 || m.mSpentO > 0;
+      return `<div class="month-card past-month">
       <div>
         <div class="month-name">${MONTH_NAMES[m.month]} ${m.year} <span class="month-tag tag-past">Abgeschlossen</span></div>
-        <div class="month-row1"><span><strong>${fmtH(m.availH)}</strong> verfügbar</span></div>
+        <div class="month-row1">
+          ${m.mSpentR > 0 ? `<span><strong>${fmtH(m.mSpentR)}</strong> remote genutzt</span>` : ''}
+          ${m.mSpentO > 0 ? `<span><strong>${fmtH(m.mSpentO)}</strong> vor Ort genutzt</span>` : ''}
+          ${!hasSpent ? `<span><strong>0h</strong> genutzt</span>` : ''}
+          <span style="color:var(--text-muted)">${fmtH(m.availH)} verfügbar</span>
+        </div>
+        ${hasSpent ? `<div class="month-row2"><span>Kosten: <strong>${fmt(spentCostM)} €</strong></span></div>` : ''}
       </div>
       <div class="total-hpd"><div class="hpd-value" style="color:var(--text-muted)">–</div><div class="hpd-label">h/Tag</div></div>
     </div>`;
+    }
 
     const hpdr  = m.hPerDay !== null ? m.hPerDay : 0;
     const total = hpdr + m.hpdOnsite;
