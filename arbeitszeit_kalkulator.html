@@ -323,8 +323,8 @@ function renderSpentInputs() {
   QUARTER_MONTHS.forEach((q, i) => {
     c.innerHTML += `<div class="spent-row" id="srow${i}">
       <span class="spent-month">${MONTH_NAMES[q.month]}</span>
-      <input type="number" id="sr${i}" value="0" step="0.5" min="0" oninput="calc();saveState()">
-      <input type="number" id="so${i}" value="0" step="0.5" min="0" oninput="calc();saveState()">
+      <input type="number" id="sr${i}" value="0" step="0.25" min="0" oninput="calc();saveState()">
+      <input type="number" id="so${i}" value="0" step="0.25" min="0" oninput="calc();saveState()">
       <span class="spent-cost" id="scost${i}">0 €</span>
     </div>`;
   });
