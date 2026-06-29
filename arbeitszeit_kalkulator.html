@@ -249,6 +249,23 @@ function initMonths() {
   const start = new Date(startVal + 'T00:00:00');
   const end   = new Date(endVal   + 'T00:00:00');
   if (start > end) return;
+
+  // Preserve existing inputs keyed by "YYYY-M" before wiping the DOM
+  const prevSpent   = {};
+  const prevAvailH  = {};
+  const prevReserve = {};
+  QUARTER_MONTHS.forEach((q, i) => {
+    const key = q.year + '-' + q.month;
+    const sr = document.getElementById('sr'+i);
+    const so = document.getElementById('so'+i);
+    const mh = document.getElementById('mh'+i);
+    const rh = document.getElementById('rh'+i);
+    const rcb = document.getElementById('rcb'+i);
+    if (sr || so) prevSpent[key]   = { r: sr ? sr.value : '0', o: so ? so.value : '0' };
+    if (mh)       prevAvailH[key]  = mh.value;
+    if (rh)       prevReserve[key] = { h: rh.value, active: rcb ? rcb.classList.contains('checked') : false };
+  });
+
   QUARTER_MONTHS = [];
   let y = start.getFullYear(), m = start.getMonth();
   const endY = end.getFullYear(), endM = end.getMonth();
@@ -259,6 +276,32 @@ function initMonths() {
   renderMonthInputs();
   renderReserveInputs();
   renderSpentInputs();
+
+  // Restore values for months that existed before
+  QUARTER_MONTHS.forEach((q, i) => {
+    const key = q.year + '-' + q.month;
+    if (prevSpent[key]) {
+      const sr = document.getElementById('sr'+i);
+      const so = document.getElementById('so'+i);
+      if (sr) sr.value = prevSpent[key].r;
+      if (so) so.value = prevSpent[key].o;
+    }
+    if (prevAvailH[key]) {
+      const mh = document.getElementById('mh'+i);
+      if (mh) mh.value = prevAvailH[key];
+    }
+    if (prevReserve[key]) {
+      const rh  = document.getElementById('rh'+i);
+      const rcb = document.getElementById('rcb'+i);
+      const row = document.getElementById('rrow'+i);
+      if (rh) rh.value = prevReserve[key].h;
+      if (prevReserve[key].active && rcb) {
+        rcb.classList.add('checked');
+        if (row) row.classList.remove('inactive');
+        if (rh)  { rh.style.opacity = '1'; rh.style.pointerEvents = 'auto'; }
+      }
+    }
+  });
 }
 
 function renderMonthInputs() {
