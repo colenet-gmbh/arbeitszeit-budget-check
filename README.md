@@ -30,8 +30,9 @@ Aus diesen Werten berechnet das Tool:
 - **Flexibler Vertragszeitraum**: Beliebige Start- und Enddaten – das Tool funktioniert für 2 Monate genauso wie für 12 Monate
 - **Tages-Banner** oben auf der Seite: zeigt den heutigen Sollwert auf einen Blick; am Wochenende wird der nächste Arbeitstag angezeigt
 - **Gestapelter Fortschrittsbalken**: verbraucht / reserviert / verfügbar in Abstufungen von Meergrün
-- **Monatskarten** mit Remote-Budget, geplantem Vor-Ort-Anteil, Arbeitstagen und Gesamtbudget je Monat
+- **Monatskarten** mit Remote-Budget, geplantem Vor-Ort-Anteil, Arbeitstagen und Gesamtbudget je Monat; abgeschlossene Monate zeigen tatsächlich geleistete Stunden (Remote / Vor Ort) sowie die entstandenen Kosten
 - **Auto-Save**: alle Eingaben werden automatisch im Browser-LocalStorage gespeichert und beim nächsten Öffnen wiederhergestellt – bei geändertem Vertragszeitraum bleiben Stammdaten erhalten, Monatsdaten starten frisch
+- **Colenet-Logo** im Header – klickbar, verlinkt auf colenet.de
 
 ## Technische Details
 
