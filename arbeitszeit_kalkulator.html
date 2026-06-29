@@ -142,6 +142,32 @@
 
   #toast { position:fixed; bottom:2rem; left:50%; transform:translateX(-50%) translateY(12px); background:var(--teal-deeper); color:#fff; padding:10px 20px; border-radius:99px; font-size:0.8rem; font-weight:500; opacity:0; pointer-events:none; transition:opacity 0.25s,transform 0.25s; white-space:nowrap; z-index:999; }
   #toast.visible { opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* ── Modal: Vertragsverlängerung ───────────────────────── */
+  #renewOverlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:200; align-items:center; justify-content:center; }
+  #renewOverlay.open { display:flex; }
+  #renewModal { background:#fff; border-radius:var(--radius); padding:1.75rem; width:min(540px,92vw); box-shadow:0 20px 60px rgba(0,0,0,0.2); }
+  .rn-title { font-size:1.05rem; font-weight:600; color:var(--text-primary); margin-bottom:0.75rem; }
+  .rn-meta { font-size:0.78rem; color:var(--text-secondary); background:var(--surface); padding:8px 12px; border-radius:var(--radius-sm); display:flex; gap:16px; flex-wrap:wrap; margin-bottom:1.25rem; }
+  .rn-meta strong { color:var(--text-primary); }
+  .rn-row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
+  .rn-row2 label { font-size:0.72rem; font-weight:500; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; display:block; margin-bottom:4px; }
+  .rn-row2 input { width:100%; box-sizing:border-box; height:38px; padding:0 10px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:0.85rem; font-family:'DM Sans',sans-serif; color:var(--text-primary); background:#fff; }
+  .rn-row2 input:focus { outline:none; border-color:var(--teal); }
+  .rn-var-label { font-size:0.72rem; font-weight:500; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:8px; margin-top:4px; }
+  .rn-option { display:flex; align-items:flex-start; gap:10px; padding:10px 12px; border:1.5px solid var(--border); border-radius:var(--radius-sm); margin-bottom:6px; cursor:pointer; transition:border-color .15s,background .15s; }
+  .rn-option:has(input:checked) { border-color:var(--teal); background:var(--teal-light); }
+  .rn-option input[type=radio] { margin-top:3px; accent-color:var(--teal); flex-shrink:0; }
+  .rn-opt-title { font-size:0.85rem; font-weight:500; color:var(--text-primary); }
+  .rn-opt-sub { font-size:0.75rem; color:var(--text-secondary); margin-top:2px; line-height:1.4; }
+  .rn-hint { font-size:0.75rem; color:#1a6b2e; background:#e8f5ed; padding:8px 12px; border-radius:var(--radius-sm); margin-top:10px; margin-bottom:1.25rem; }
+  .rn-actions { display:flex; justify-content:flex-end; gap:10px; }
+  .rn-btn-cancel { height:38px; padding:0 16px; border:1.5px solid var(--border); border-radius:var(--radius-sm); background:transparent; color:var(--text-secondary); font-family:'DM Sans',sans-serif; font-size:0.85rem; cursor:pointer; }
+  .rn-btn-cancel:hover { background:var(--surface); }
+  .rn-btn-confirm { height:38px; padding:0 20px; border:none; border-radius:var(--radius-sm); background:var(--teal); color:#fff; font-family:'DM Sans',sans-serif; font-size:0.85rem; font-weight:500; cursor:pointer; }
+  .rn-btn-confirm:hover { background:var(--teal-dark); }
+  .btn-renew { background:none; border:1.5px solid var(--teal); color:var(--teal-dark); border-radius:20px; padding:3px 11px; font-size:0.7rem; font-weight:500; cursor:pointer; font-family:'DM Sans',sans-serif; transition:background .15s; margin-top:6px; display:inline-block; }
+  .btn-renew:hover { background:var(--teal-light); }
 </style>
 </head>
 <body>
@@ -175,7 +201,7 @@
     <p class="card-title">Grundkonfiguration</p>
     <div class="row3">
       <div class="field"><label>Vertragsbeginn</label><input type="date" id="startDate"></div>
-      <div class="field"><label>Vertragsende</label><input type="date" id="endDate"></div>
+      <div class="field"><label>Vertragsende</label><input type="date" id="endDate"><button class="btn-renew" onclick="openRenewModal()">Verlängern →</button></div>
       <div class="field"><label>Gesamtbudget (€)</label><input type="number" id="budget" value="25000" step="100"></div>
     </div>
     <div class="row3">
@@ -677,6 +703,154 @@ document.getElementById('startDate').addEventListener('change', ()=>{ initMonths
 document.getElementById('endDate').addEventListener('change',   ()=>{ initMonths(); calc(); saveState(); });
 document.getElementById('monthInputs').addEventListener('input', ()=>{ calc(); saveState(); });
 document.getElementById('reserveMonthInputs').addEventListener('input', ()=>{ calc(); saveState(); });
+
+// ── Toast ──────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('visible');
+  setTimeout(() => t.classList.remove('visible'), 2500);
+}
+
+// ── Vertragsverlängerung ───────────────────────────────────
+function openRenewModal() {
+  const startVal = document.getElementById('startDate').value;
+  const endVal   = document.getElementById('endDate').value;
+  const drR = parseFloat(document.getElementById('dayRateRemote').value) || 0;
+  const drO = parseFloat(document.getElementById('dayRateOnsite').value) || 0;
+  const hpd = parseFloat(document.getElementById('hoursPerDay').value) || 8;
+  const fmtDate = d => d ? new Date(d+'T00:00:00').toLocaleDateString('de-DE') : '–';
+  document.getElementById('rnCurrentPeriod').textContent = fmtDate(startVal) + ' – ' + fmtDate(endVal);
+
+  const rR = drR / hpd, rO = drO / hpd;
+  let spentCost = 0, reserveCost = 0;
+  QUARTER_MONTHS.forEach((_,i) => {
+    spentCost  += (parseFloat(document.getElementById('sr'+i)?.value)||0) * rR;
+    spentCost  += (parseFloat(document.getElementById('so'+i)?.value)||0) * rO;
+    const cb = document.getElementById('rcb'+i);
+    if (cb && cb.classList.contains('checked'))
+      reserveCost += (parseFloat(document.getElementById('rh'+i)?.value)||0) * rO;
+  });
+  document.getElementById('rnSpentDisplay').textContent = fmt(spentCost + reserveCost);
+
+  let newEnd = endVal ? new Date(endVal+'T00:00:00') : new Date();
+  newEnd.setMonth(newEnd.getMonth() + 4);
+  newEnd = new Date(newEnd.getFullYear(), newEnd.getMonth(), 0);
+  document.getElementById('rnNewEnd').value       = newEnd.toISOString().split('T')[0];
+  document.getElementById('rnRateRemote').value   = drR;
+  document.getElementById('rnRateOnsite').value   = drO;
+  document.getElementById('rnNewBudget').value    = '';
+  document.querySelector('input[name=rnVariant][value=clean]').checked = true;
+  updateRnPreview();
+  document.getElementById('renewOverlay').classList.add('open');
+}
+function closeRenewModal() {
+  document.getElementById('renewOverlay').classList.remove('open');
+}
+function updateRnPreview() {
+  const newBudget     = parseFloat(document.getElementById('rnNewBudget').value) || 0;
+  const newRateRemote = parseFloat(document.getElementById('rnRateRemote').value) || 0;
+  const newRateOnsite = parseFloat(document.getElementById('rnRateOnsite').value) || 0;
+  const hpd           = parseFloat(document.getElementById('hoursPerDay').value) || 8;
+  const rR = newRateRemote / hpd, rO = newRateOnsite / hpd;
+  let spentCost = 0, reserveCost = 0;
+  QUARTER_MONTHS.forEach((_,i) => {
+    spentCost  += (parseFloat(document.getElementById('sr'+i)?.value)||0) * rR;
+    spentCost  += (parseFloat(document.getElementById('so'+i)?.value)||0) * rO;
+    const cb = document.getElementById('rcb'+i);
+    if (cb && cb.classList.contains('checked'))
+      reserveCost += (parseFloat(document.getElementById('rh'+i)?.value)||0) * rO;
+  });
+  const oldBudget = parseFloat(document.getElementById('budget').value) || 0;
+  const rest = Math.max(0, oldBudget - spentCost - reserveCost);
+  document.getElementById('rnRestDisplay').textContent       = fmt(rest);
+  document.getElementById('rnPreviewClean').textContent      = fmt(newBudget) + ' €';
+  document.getElementById('rnPreviewCarryover').textContent  = fmt(rest + newBudget) + ' €';
+}
+function confirmRenew() {
+  const newEndVal     = document.getElementById('rnNewEnd').value;
+  const newBudget     = parseFloat(document.getElementById('rnNewBudget').value);
+  const newRateRemote = parseFloat(document.getElementById('rnRateRemote').value);
+  const newRateOnsite = parseFloat(document.getElementById('rnRateOnsite').value);
+  const carryover     = document.querySelector('input[name=rnVariant]:checked').value === 'carryover';
+  const endVal        = document.getElementById('endDate').value;
+  if (!newEndVal || !newBudget || newBudget <= 0) { alert('Bitte neues Vertragsende und Budget angeben.'); return; }
+  if (newEndVal <= endVal) { alert('Das neue Vertragsende muss nach dem aktuellen Vertragsende liegen.'); return; }
+
+  const hpd = parseFloat(document.getElementById('hoursPerDay').value) || 8;
+  const rR = newRateRemote / hpd, rO = newRateOnsite / hpd;
+  let spentCost = 0, reserveCost = 0;
+  QUARTER_MONTHS.forEach((_,i) => {
+    spentCost  += (parseFloat(document.getElementById('sr'+i)?.value)||0) * rR;
+    spentCost  += (parseFloat(document.getElementById('so'+i)?.value)||0) * rO;
+    const cb = document.getElementById('rcb'+i);
+    if (cb && cb.classList.contains('checked'))
+      reserveCost += (parseFloat(document.getElementById('rh'+i)?.value)||0) * rO;
+  });
+  const oldBudget = parseFloat(document.getElementById('budget').value) || 0;
+  const newTotalBudget = carryover ? oldBudget + newBudget : spentCost + reserveCost + newBudget;
+
+  document.getElementById('budget').value         = Math.round(newTotalBudget);
+  document.getElementById('dayRateRemote').value  = newRateRemote;
+  document.getElementById('dayRateOnsite').value  = newRateOnsite;
+  document.getElementById('endDate').value        = newEndVal;
+
+  initMonths();
+  saveState();
+  calc();
+  closeRenewModal();
+  showToast('Vertrag verlängert ✓');
+}
 </script>
+
+<div id="renewOverlay">
+  <div id="renewModal">
+    <div class="rn-title">Vertrag verlängern</div>
+    <div class="rn-meta">
+      <span>Aktueller Zeitraum: <strong id="rnCurrentPeriod">–</strong></span>
+      <span>Davon verbraucht: <strong id="rnSpentDisplay">–</strong> €</span>
+    </div>
+    <div class="rn-row2">
+      <div>
+        <label>Neues Vertragsende</label>
+        <input type="date" id="rnNewEnd" oninput="updateRnPreview()">
+      </div>
+      <div>
+        <label>Neues Vertragsbudget (€)</label>
+        <input type="number" id="rnNewBudget" step="100" placeholder="30000" oninput="updateRnPreview()">
+      </div>
+    </div>
+    <div class="rn-row2">
+      <div>
+        <label>Tagessatz Remote (€)</label>
+        <input type="number" id="rnRateRemote" step="10" oninput="updateRnPreview()">
+      </div>
+      <div>
+        <label>Tagessatz Vor Ort (€)</label>
+        <input type="number" id="rnRateOnsite" step="10" oninput="updateRnPreview()">
+      </div>
+    </div>
+    <div class="rn-var-label">Wie wird das Restbudget behandelt?</div>
+    <label class="rn-option">
+      <input type="radio" name="rnVariant" value="clean" checked onchange="updateRnPreview()">
+      <div>
+        <div class="rn-opt-title">Sauber starten</div>
+        <div class="rn-opt-sub">Altes Budget gilt als abgeschlossen — verfügbar: <strong id="rnPreviewClean">–</strong></div>
+      </div>
+    </label>
+    <label class="rn-option">
+      <input type="radio" name="rnVariant" value="carryover" onchange="updateRnPreview()">
+      <div>
+        <div class="rn-opt-title">Restbudget übernehmen</div>
+        <div class="rn-opt-sub"><strong id="rnRestDisplay">–</strong> € unverbraucht — verfügbar: <strong id="rnPreviewCarryover">–</strong></div>
+      </div>
+    </label>
+    <div class="rn-hint">Alle bisherigen Stunden bleiben erhalten.</div>
+    <div class="rn-actions">
+      <button class="rn-btn-cancel" onclick="closeRenewModal()">Abbrechen</button>
+      <button class="rn-btn-confirm" onclick="confirmRenew()">Verlängern →</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
