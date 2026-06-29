@@ -458,20 +458,25 @@ function calc() {
     const isFuture  = mStart > today;
     let workdaysTotal = countWorkdays(q.year, q.month);
     let workdaysRemaining = 0;
-    if (isCurrent) { const d=new Date(today); while(d<=mEnd){if(d.getDay()!==0&&d.getDay()!==6)workdaysRemaining++;d.setDate(d.getDate()+1);} }
+    // Count workdays from TOMORROW — today's hours are tracked via spent inputs,
+    // so the remaining allocation is for future days only.
+    if (isCurrent) { const d=new Date(today); d.setDate(d.getDate()+1); while(d<=mEnd){if(d.getDay()!==0&&d.getDay()!==6)workdaysRemaining++;d.setDate(d.getDate()+1);} }
     else if (isFuture) workdaysRemaining = countWorkdays(q.year,q.month);
+    // On the last workday of the month today itself counts as 1 effective day
+    const todayIsWorkday = isCurrent && today.getDay()!==0 && today.getDay()!==6 && today>=mStart && today<=mEnd;
+    const effectiveWorkdays = (workdaysRemaining===0 && todayIsWorkday) ? 1 : workdaysRemaining;
     // Verbleibende verfügbare Stunden: availH anteilig nach verbleibenden Arbeitstagen
-    const availHRemaining = workdaysTotal > 0 ? availH * (workdaysRemaining / workdaysTotal) : 0;
-    // Wochenende am Monatsende: kein Arbeitstag mehr → Monat gilt als abgeschlossen
-    if (isCurrent && workdaysRemaining === 0) { isPast = true; isCurrent = false; }
+    const availHRemaining = workdaysTotal > 0 ? availH * (effectiveWorkdays / workdaysTotal) : 0;
+    // Wochenende am Monatsende: kein Arbeitstag mehr → Monat gilt als abgeschlossen (aber nicht wenn heute selbst noch Arbeitstag ist)
+    if (isCurrent && workdaysRemaining === 0 && !todayIsWorkday) { isPast = true; isCurrent = false; }
     const mSpentR = parseFloat(document.getElementById('sr'+i)?.value)||0;
     const mSpentO = parseFloat(document.getElementById('so'+i)?.value)||0;
-    return { ...q, availH, availHRemaining, isPast, isCurrent, isFuture, workdaysRemaining, reserveH: reserveByIdx[i]||0, mSpentR, mSpentO };
+    return { ...q, availH, availHRemaining, isPast, isCurrent, isFuture, workdaysRemaining, effectiveWorkdays, reserveH: reserveByIdx[i]||0, mSpentR, mSpentO };
   });
 
   const remaining  = months.filter(m=>!m.isPast);
   const freeBudget = budget - spentCost - totalReserveCost;
-  const monthData  = remaining.map(m=>({...m, maxH: m.workdaysRemaining*hpd, weight: m.availHRemaining}));
+  const monthData  = remaining.map(m=>({...m, maxH: m.effectiveWorkdays*hpd, weight: m.availHRemaining}));
   const alloc      = distributeRemoteBudget(freeBudget, monthData, rR);
 
   let ri = 0;
@@ -479,8 +484,8 @@ function calc() {
     if (m.isPast) return {...m, hAlloc:0, budgetAlloc:0, hPerDay:null, hpdOnsite:0};
     const hAlloc  = alloc[ri]||0;
     const budgetAlloc = hAlloc*rR + m.reserveH*rO;
-    const hPerDay = m.workdaysRemaining > 0 ? hAlloc/m.workdaysRemaining : null;
-    const hpdOnsite = m.workdaysRemaining > 0 ? m.reserveH/m.workdaysRemaining : 0;
+    const hPerDay = m.effectiveWorkdays > 0 ? hAlloc/m.effectiveWorkdays : null;
+    const hpdOnsite = m.effectiveWorkdays > 0 ? m.reserveH/m.effectiveWorkdays : 0;
     ri++;
     return {...m, hAlloc, budgetAlloc, hPerDay, hpdOnsite};
   });
