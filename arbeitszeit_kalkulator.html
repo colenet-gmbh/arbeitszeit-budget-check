@@ -197,43 +197,43 @@
 
 <div class="container">
 
-  <div class="card">
+  <form class="card" autocomplete="off" onsubmit="return false;">
     <p class="card-title">Grundkonfiguration</p>
     <div class="row3">
-      <div class="field"><label>Vertragsbeginn</label><input type="date" id="startDate"></div>
-      <div class="field"><label>Vertragsende</label><input type="date" id="endDate"><button class="btn-renew" onclick="openRenewModal()">Verlängern →</button></div>
-      <div class="field"><label>Gesamtbudget (€)</label><input type="number" id="budget" value="25000" step="100"></div>
+      <div class="field"><label>Vertragsbeginn</label><input type="date" id="startDate" autocomplete="off"></div>
+      <div class="field"><label>Vertragsende</label><input type="date" id="endDate" autocomplete="off"><button class="btn-renew" onclick="openRenewModal()">Verlängern →</button></div>
+      <div class="field"><label>Gesamtbudget (€)</label><input type="number" id="budget" value="25000" step="100" autocomplete="off"></div>
     </div>
     <div class="row3">
       <div class="field">
         <label>Tagessatz Remote (€)</label>
-        <input type="number" id="dayRateRemote" value="1020" step="10">
+        <input type="number" id="dayRateRemote" value="1020" step="10" autocomplete="off">
       </div>
       <div class="field">
         <label>Tagessatz Vor Ort (€)</label>
-        <input type="number" id="dayRateOnsite" value="1120" step="10">
+        <input type="number" id="dayRateOnsite" value="1120" step="10" autocomplete="off">
       </div>
       <div class="field">
         <label>Stunden pro Tag</label>
-        <input type="number" id="hoursPerDay" value="8" step="0.5" min="1" max="12">
+        <input type="number" id="hoursPerDay" value="8" step="0.5" min="1" max="12" autocomplete="off">
         <span class="hint" id="rateHint">= 127,50 € / 140,00 € pro Stunde</span>
       </div>
     </div>
-  </div>
+  </form>
 
-  <div class="card">
+  <form class="card" autocomplete="off" onsubmit="return false;">
     <p class="card-title">Verfügbare Stunden je Monat</p>
     <div class="row3" id="monthInputs"></div>
     <p style="font-size:0.7rem;color:var(--text-muted);margin-top:4px;">Mo–Fr × Stunden/Tag, minus Feiertage &amp; Urlaub</p>
-  </div>
+  </form>
 
-  <div class="card">
+  <form class="card" autocomplete="off" onsubmit="return false;">
     <p class="card-title">Bereits geleistete Arbeitszeit</p>
     <div id="spentMonthInputs"></div>
     <div id="spentNote" class="inline-note" style="display:none"></div>
-  </div>
+  </form>
 
-  <div class="card">
+  <form class="card" autocomplete="off" onsubmit="return false;">
     <p class="card-title">Reservierung zukünftige Vor-Ort-Tage</p>
     <p style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:1rem;">Aktiviere pro Monat ob ein Vor-Ort-Einsatz erwartet wird und wie viele Stunden.</p>
     <div id="reserveMonthInputs"></div>
@@ -241,7 +241,7 @@
       <span style="font-size:0.75rem;color:var(--text-secondary);">Gesamt reserviert</span>
       <span id="reserveTotalDisplay" style="font-family:'DM Mono',monospace;font-size:0.9rem;font-weight:500;color:var(--teal-deeper);">0h · 0 €</span>
     </div>
-  </div>
+  </form>
 
   <div class="results" id="results" style="display:none">
     <p class="results-header">Ergebnis</p>
@@ -339,7 +339,7 @@ function renderMonthInputs() {
     const def = Math.round(wd * hpd);
     c.innerHTML += `<div class="field">
       <label>${MONTH_NAMES[q.month]}</label>
-      <input type="number" id="mh${i}" value="${def}" step="1" min="0">
+      <input type="number" id="mh${i}" value="${def}" step="1" min="0" autocomplete="off">
       <span class="hint">${wd} AT · ${def}h Standard</span>
     </div>`;
   });
@@ -373,7 +373,7 @@ function renderReserveInputs() {
         <svg width="10" height="10" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="white" stroke-width="2.5" fill="none"/></svg>
       </div>
       <span class="reserve-month-label">${MONTH_NAMES[q.month]} ${q.year}</span>
-      <input type="number" id="rh${i}" value="8" step="1" min="0" style="opacity:0.35;pointer-events:none;" oninput="calc();saveState()">
+      <input type="number" id="rh${i}" value="8" step="1" min="0" style="opacity:0.35;pointer-events:none;" oninput="calc();saveState()" autocomplete="off">
       <span class="reserve-cost-label" id="rcost${i}">0 €</span>
     </div>`;
   });
@@ -392,8 +392,8 @@ function renderSpentInputs() {
   QUARTER_MONTHS.forEach((q, i) => {
     c.innerHTML += `<div class="spent-row" id="srow${i}">
       <span class="spent-month">${MONTH_NAMES[q.month]}</span>
-      <input type="number" id="sr${i}" value="0" step="0.25" min="0" oninput="calc();saveState()">
-      <input type="number" id="so${i}" value="0" step="0.25" min="0" oninput="calc();saveState()">
+      <input type="number" id="sr${i}" value="0" step="0.25" min="0" oninput="calc();saveState()" autocomplete="off">
+      <input type="number" id="so${i}" value="0" step="0.25" min="0" oninput="calc();saveState()" autocomplete="off">
       <span class="spent-cost" id="scost${i}">0 €</span>
     </div>`;
   });
@@ -804,7 +804,7 @@ function confirmRenew() {
 </script>
 
 <div id="renewOverlay">
-  <div id="renewModal">
+  <form id="renewModal" autocomplete="off" onsubmit="return false;">
     <div class="rn-title">Vertrag verlängern</div>
     <div class="rn-meta">
       <span>Aktueller Zeitraum: <strong id="rnCurrentPeriod">–</strong></span>
@@ -817,17 +817,17 @@ function confirmRenew() {
       </div>
       <div>
         <label>Neues Vertragsbudget (€)</label>
-        <input type="number" id="rnNewBudget" step="100" placeholder="30000" oninput="updateRnPreview()">
+        <input type="number" id="rnNewBudget" step="100" placeholder="30000" oninput="updateRnPreview()" autocomplete="off">
       </div>
     </div>
     <div class="rn-row2">
       <div>
         <label>Tagessatz Remote (€)</label>
-        <input type="number" id="rnRateRemote" step="10" oninput="updateRnPreview()">
+        <input type="number" id="rnRateRemote" step="10" oninput="updateRnPreview()" autocomplete="off">
       </div>
       <div>
         <label>Tagessatz Vor Ort (€)</label>
-        <input type="number" id="rnRateOnsite" step="10" oninput="updateRnPreview()">
+        <input type="number" id="rnRateOnsite" step="10" oninput="updateRnPreview()" autocomplete="off">
       </div>
     </div>
     <div class="rn-var-label">Wie wird das Restbudget behandelt?</div>
@@ -850,7 +850,7 @@ function confirmRenew() {
       <button class="rn-btn-cancel" onclick="closeRenewModal()">Abbrechen</button>
       <button class="rn-btn-confirm" onclick="confirmRenew()">Verlängern →</button>
     </div>
-  </div>
+  </form>
 </div>
 </body>
 </html>
