@@ -43,7 +43,7 @@
   .today-banner { background:var(--teal-deeper); padding:0.9rem 2rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; }
   .tb-label  { font-size:0.72rem; color:rgba(255,255,255,0.65); }
   .tb-value  { font-family:'DM Mono',monospace; font-size:1.6rem; font-weight:500; color:#fff; line-height:1.1; }
-  .tb-sub    { font-size:0.72rem; color:rgba(255,255,255,0.6); margin-top:2px; }
+  .tb-sub    { font-size:0.72rem; color:rgba(255,255,255,0.6); margin-top:2px; max-width:48ch; }
   .tb-right  { text-align:right; }
   .tb-budget { font-size:0.78rem; color:rgba(255,255,255,0.75); font-family:'DM Mono',monospace; }
 
@@ -185,7 +185,7 @@
 </header>
 <div class="today-banner">
   <div>
-    <div class="tb-label">Heute noch arbeiten</div>
+    <div class="tb-label">Tagespensum remote</div>
     <div class="tb-value" id="bannerHpd">–</div>
     <div class="tb-sub"   id="bannerSub"></div>
   </div>
@@ -252,7 +252,7 @@
 </div>
 
 <script>
-const VERSION = '1.0';
+const VERSION = '1.1';
 const MONTH_NAMES = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 let QUARTER_MONTHS = [];
 
@@ -402,6 +402,18 @@ function renderSpentInputs() {
 function fmt(n)      { return n.toLocaleString('de-DE', {minimumFractionDigits:0, maximumFractionDigits:0}); }
 function fmtH(n)     { return n.toFixed(1)+'h'; }
 function fmtD(n, d)  { return n.toLocaleString('de-DE', {minimumFractionDigits:d, maximumFractionDigits:d}); }
+function fmtDays(n)  { return Number.isInteger(n) ? String(n) : fmtD(n,1); }
+function onsiteLabel(days, reserveH) { return fmtDays(days)+(days===1?' Vor-Ort-Tag':' Vor-Ort-Tage')+' ('+fmtH(reserveH)+')'; }
+function bannerSentence(m) {
+  let s = 'Im '+MONTH_NAMES[m.month]+' bleiben dir '+fmtH(m.hAlloc)+' remote, verteilt auf '
+    + fmtDays(m.remoteDays)+(m.remoteDays===1 ? ' Remote-Arbeitstag.' : ' Remote-Arbeitstage.');
+  if (m.onsiteDays > 0) {
+    s += ' Dazu '+fmtDays(m.onsiteDays)
+      + (m.onsiteDays===1 ? ' reservierter Vor-Ort-Tag' : ' reservierte Vor-Ort-Tage')
+      + ' ('+fmtH(m.reserveH)+').';
+  }
+  return s;
+}
 
 function distributeRemoteBudget(freeBudget, monthData, rR) {
   const alloc = monthData.map(()=>0), locked = monthData.map(()=>false);
@@ -497,23 +509,27 @@ function calc() {
     if (isCurrent && workdaysRemaining === 0 && !todayIsWorkday) { isPast = true; isCurrent = false; }
     const mSpentR = parseFloat(document.getElementById('sr'+i)?.value)||0;
     const mSpentO = parseFloat(document.getElementById('so'+i)?.value)||0;
-    return { ...q, availH, availHRemaining, isPast, isCurrent, isFuture, workdaysRemaining, effectiveWorkdays, reserveH: reserveByIdx[i]||0, mSpentR, mSpentO };
+    // Vor-Ort-Arbeit findet an ganzen Tagen statt: reservierte Stunden in Tage
+    // umrechnen und diese Tage aus den Remote-Arbeitstagen herausnehmen.
+    const reserveH   = reserveByIdx[i]||0;
+    const onsiteDays = hpd > 0 ? reserveH/hpd : 0;
+    const remoteDays = Math.max(0, effectiveWorkdays - onsiteDays);
+    return { ...q, availH, availHRemaining, isPast, isCurrent, isFuture, workdaysRemaining, effectiveWorkdays, reserveH, onsiteDays, remoteDays, mSpentR, mSpentO };
   });
 
   const remaining  = months.filter(m=>!m.isPast);
   const freeBudget = budget - spentCost - totalReserveCost;
-  const monthData  = remaining.map(m=>({...m, maxH: m.effectiveWorkdays*hpd, weight: m.availHRemaining}));
+  const monthData  = remaining.map(m=>({...m, maxH: m.remoteDays*hpd, weight: m.availHRemaining}));
   const alloc      = distributeRemoteBudget(freeBudget, monthData, rR);
 
   let ri = 0;
   const finalMonths = months.map(m => {
-    if (m.isPast) return {...m, hAlloc:0, budgetAlloc:0, hPerDay:null, hpdOnsite:0};
+    if (m.isPast) return {...m, hAlloc:0, budgetAlloc:0, hPerDay:null};
     const hAlloc  = alloc[ri]||0;
     const budgetAlloc = hAlloc*rR + m.reserveH*rO;
-    const hPerDay = m.effectiveWorkdays > 0 ? hAlloc/m.effectiveWorkdays : null;
-    const hpdOnsite = m.effectiveWorkdays > 0 ? m.reserveH/m.effectiveWorkdays : 0;
+    const hPerDay = m.remoteDays > 0 ? hAlloc/m.remoteDays : null;
     ri++;
-    return {...m, hAlloc, budgetAlloc, hPerDay, hpdOnsite};
+    return {...m, hAlloc, budgetAlloc, hPerDay};
   });
 
   // ── Today banner ──
@@ -528,11 +544,8 @@ function calc() {
     document.getElementById('bannerSub').textContent    = 'Nächster Arbeitstag: '+nextLabel;
     document.getElementById('bannerBudget').textContent = cur && cur.hPerDay !== null ? 'Freies Budget: '+fmt(freeBudget)+' €' : '';
   } else if (cur && cur.hPerDay !== null) {
-    document.getElementById('bannerHpd').textContent    = fmtD(cur.hPerDay,1)+'h remote';
-    const total = cur.hPerDay + cur.hpdOnsite;
-    document.getElementById('bannerSub').textContent    = cur.hpdOnsite > 0
-      ? '+ '+fmtD(cur.hpdOnsite,1)+'h vor Ort = '+fmtD(total,1)+'h gesamt'
-      : 'pro Arbeitstag · '+MONTH_NAMES[cur.month];
+    document.getElementById('bannerHpd').textContent    = fmtD(cur.hPerDay,1)+'h';
+    document.getElementById('bannerSub').textContent    = bannerSentence(cur);
     document.getElementById('bannerBudget').textContent = 'Verfügbares Budget: '+fmt(freeBudget)+' €';
   } else {
     document.getElementById('bannerHpd').textContent    = '–';
@@ -604,7 +617,6 @@ function calc() {
     }
 
     const hpdr  = m.hPerDay !== null ? m.hPerDay : 0;
-    const total = hpdr + m.hpdOnsite;
     const tag   = m.isCurrent?'tag-current':'tag-future';
     const label = m.isCurrent?'Laufend':'Geplant';
     const cc    = m.isCurrent?'current-month':'';
@@ -614,18 +626,16 @@ function calc() {
         <div class="month-name">${MONTH_NAMES[m.month]} ${m.year} <span class="month-tag ${tag}">${label}</span></div>
         <div class="month-row1">
           <span><strong>${fmtH(m.hAlloc)}</strong> remote</span>
-          ${m.reserveH>0?`<span><strong>${fmtH(m.reserveH)}</strong> vor Ort geplant</span>`:''}
+          ${m.reserveH>0?`<span><strong>${onsiteLabel(m.onsiteDays, m.reserveH)}</strong> geplant</span>`:''}
           <span><strong>${m.workdaysRemaining}</strong> Arbeitstage</span>
         </div>
         <div class="month-row2">
           <span>Budget gesamt: <strong>${fmt(m.budgetAlloc)} €</strong></span>
-          ${m.reserveH>0?`<span>Ø gesamt: <strong>${fmtD(total,1)}h/Tag</strong></span>`:''}
         </div>
       </div>
       <div class="total-hpd">
         <div class="hpd-value">${m.hPerDay!==null?fmtD(hpdr,1):'–'}</div>
-        <div class="hpd-label">h/Tag remote</div>
-        ${m.hpdOnsite>0?`<div class="hpd-extra">+${fmtD(m.hpdOnsite,1)}h vor Ort</div>`:''}
+        <div class="hpd-label">h/Remote-Tag</div>
         <div class="hpd-sollwert">Sollwert für Budgetrahmen</div>
       </div>
     </div>`;
