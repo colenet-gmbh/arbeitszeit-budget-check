@@ -214,17 +214,24 @@
         <input type="number" id="dayRateOnsite" value="1120" step="10" autocomplete="off">
       </div>
       <div class="field">
-        <label>Stunden pro Tag</label>
+        <label>Stunden je Tagessatz</label>
         <input type="number" id="hoursPerDay" value="8" step="0.5" min="1" max="12" autocomplete="off">
         <span class="hint" id="rateHint">= 127,50 € / 140,00 € pro Stunde</span>
+      </div>
+    </div>
+    <div class="row3">
+      <div class="field">
+        <label>Buchungsumfang (%)</label>
+        <input type="number" id="bookingPct" value="50" step="5" min="1" max="100" autocomplete="off">
+        <span class="hint" id="bookingHint">= 4,0h pro Tag</span>
       </div>
     </div>
   </form>
 
   <form class="card" autocomplete="off" onsubmit="return false;">
-    <p class="card-title">Verfügbare Stunden je Monat</p>
+    <p class="card-title">Verfügbare Tage je Monat</p>
     <div class="row3" id="monthInputs"></div>
-    <p style="font-size:0.7rem;color:var(--text-muted);margin-top:4px;">Mo–Fr × Stunden/Tag, minus Feiertage &amp; Urlaub</p>
+    <p style="font-size:0.7rem;color:var(--text-muted);margin-top:4px;">Arbeitstage Mo–Fr, abzüglich Feiertage, Urlaub &amp; Schulungen</p>
   </form>
 
   <form class="card" autocomplete="off" onsubmit="return false;">
@@ -235,11 +242,11 @@
 
   <form class="card" autocomplete="off" onsubmit="return false;">
     <p class="card-title">Reservierung zukünftige Vor-Ort-Tage</p>
-    <p style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:1rem;">Aktiviere pro Monat ob ein Vor-Ort-Einsatz erwartet wird und wie viele Stunden.</p>
+    <p style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:1rem;">Aktiviere pro Monat ob ein Vor-Ort-Einsatz erwartet wird und an wie vielen Tagen.</p>
     <div id="reserveMonthInputs"></div>
     <div style="margin-top:1rem;padding-top:0.75rem;border-top:1px solid var(--border-light);display:flex;justify-content:space-between;align-items:center;">
       <span style="font-size:0.75rem;color:var(--text-secondary);">Gesamt reserviert</span>
-      <span id="reserveTotalDisplay" style="font-family:'DM Mono',monospace;font-size:0.9rem;font-weight:500;color:var(--teal-deeper);">0h · 0 €</span>
+      <span id="reserveTotalDisplay" style="font-family:'DM Mono',monospace;font-size:0.9rem;font-weight:500;color:var(--teal-deeper);">0 Tage · 0 €</span>
     </div>
   </form>
 
@@ -252,7 +259,7 @@
 </div>
 
 <script>
-const VERSION = '1.1';
+const VERSION = '1.2';
 const MONTH_NAMES = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 let QUARTER_MONTHS = [];
 
@@ -278,18 +285,18 @@ function initMonths() {
 
   // Preserve existing inputs keyed by "YYYY-M" before wiping the DOM
   const prevSpent   = {};
-  const prevAvailH  = {};
+  const prevAvailD  = {};
   const prevReserve = {};
   QUARTER_MONTHS.forEach((q, i) => {
     const key = q.year + '-' + q.month;
     const sr = document.getElementById('sr'+i);
     const so = document.getElementById('so'+i);
-    const mh = document.getElementById('mh'+i);
-    const rh = document.getElementById('rh'+i);
+    const md = document.getElementById('md'+i);
+    const rd = document.getElementById('rd'+i);
     const rcb = document.getElementById('rcb'+i);
     if (sr || so) prevSpent[key]   = { r: sr ? sr.value : '0', o: so ? so.value : '0' };
-    if (mh)       prevAvailH[key]  = mh.value;
-    if (rh)       prevReserve[key] = { h: rh.value, active: rcb ? rcb.classList.contains('checked') : false };
+    if (md)       prevAvailD[key]  = md.value;
+    if (rd)       prevReserve[key] = { d: rd.value, active: rcb ? rcb.classList.contains('checked') : false };
   });
 
   QUARTER_MONTHS = [];
@@ -312,46 +319,44 @@ function initMonths() {
       if (sr) sr.value = prevSpent[key].r;
       if (so) so.value = prevSpent[key].o;
     }
-    if (prevAvailH[key]) {
-      const mh = document.getElementById('mh'+i);
-      if (mh) mh.value = prevAvailH[key];
+    if (prevAvailD[key]) {
+      const md = document.getElementById('md'+i);
+      if (md) md.value = prevAvailD[key];
     }
     if (prevReserve[key]) {
-      const rh  = document.getElementById('rh'+i);
+      const rd  = document.getElementById('rd'+i);
       const rcb = document.getElementById('rcb'+i);
       const row = document.getElementById('rrow'+i);
-      if (rh) rh.value = prevReserve[key].h;
+      if (rd) rd.value = prevReserve[key].d;
       if (prevReserve[key].active && rcb) {
         rcb.classList.add('checked');
         if (row) row.classList.remove('inactive');
-        if (rh)  { rh.style.opacity = '1'; rh.style.pointerEvents = 'auto'; }
+        if (rd)  { rd.style.opacity = '1'; rd.style.pointerEvents = 'auto'; }
       }
     }
   });
 }
 
 function renderMonthInputs() {
-  const hpd = parseFloat(document.getElementById('hoursPerDay').value) || 8;
   const c = document.getElementById('monthInputs');
   c.innerHTML = '';
   QUARTER_MONTHS.forEach((q, i) => {
     const wd = countWorkdays(q.year, q.month);
-    const def = Math.round(wd * hpd);
     c.innerHTML += `<div class="field">
       <label>${MONTH_NAMES[q.month]}</label>
-      <input type="number" id="mh${i}" value="${def}" step="1" min="0" autocomplete="off">
-      <span class="hint">${wd} AT · ${def}h Standard</span>
+      <input type="number" id="md${i}" value="${wd}" step="1" min="0" max="${wd}" autocomplete="off">
+      <span class="hint">${wd} Arbeitstage im Kalender</span>
     </div>`;
   });
   QUARTER_MONTHS.forEach((_, i) =>
-    document.getElementById('mh'+i).addEventListener('input', () => { calc(); saveState(); })
+    document.getElementById('md'+i).addEventListener('input', () => { calc(); saveState(); })
   );
 }
 
 function toggleReserve(i) {
   const cb  = document.getElementById('rcb'+i);
   const row = document.getElementById('rrow'+i);
-  const inp = document.getElementById('rh'+i);
+  const inp = document.getElementById('rd'+i);
   cb.classList.toggle('checked');
   const active = cb.classList.contains('checked');
   row.classList.toggle('inactive', !active);
@@ -373,7 +378,7 @@ function renderReserveInputs() {
         <svg width="10" height="10" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="white" stroke-width="2.5" fill="none"/></svg>
       </div>
       <span class="reserve-month-label">${MONTH_NAMES[q.month]} ${q.year}</span>
-      <input type="number" id="rh${i}" value="8" step="1" min="0" style="opacity:0.35;pointer-events:none;" oninput="calc();saveState()" autocomplete="off">
+      <input type="number" id="rd${i}" value="1" step="1" min="0" style="opacity:0.35;pointer-events:none;" oninput="calc();saveState()" autocomplete="off">
       <span class="reserve-cost-label" id="rcost${i}">0 €</span>
     </div>`;
   });
@@ -403,37 +408,15 @@ function fmt(n)      { return n.toLocaleString('de-DE', {minimumFractionDigits:0
 function fmtH(n)     { return n.toFixed(1)+'h'; }
 function fmtD(n, d)  { return n.toLocaleString('de-DE', {minimumFractionDigits:d, maximumFractionDigits:d}); }
 function fmtDays(n)  { return Number.isInteger(n) ? String(n) : fmtD(n,1); }
-function onsiteLabel(days, reserveH) { return fmtDays(days)+(days===1?' Vor-Ort-Tag':' Vor-Ort-Tage')+' ('+fmtH(reserveH)+')'; }
+function onsiteLabel(days, cost) { return fmtDays(days)+(days===1?' Vor-Ort-Tag':' Vor-Ort-Tage')+' ('+fmt(cost)+' €)'; }
 function bannerSentence(m) {
   let s = 'Im '+MONTH_NAMES[m.month]+' bleiben dir '+fmtH(m.hAlloc)+' remote, verteilt auf '
-    + fmtDays(m.remoteDays)+(m.remoteDays===1 ? ' Remote-Arbeitstag.' : ' Remote-Arbeitstage.');
+    + fmtDays(m.remoteDays)+(m.remoteDays===1 ? ' Remote-Tag.' : ' Remote-Tage.');
   if (m.onsiteDays > 0) {
     s += ' Dazu '+fmtDays(m.onsiteDays)
-      + (m.onsiteDays===1 ? ' reservierter Vor-Ort-Tag' : ' reservierte Vor-Ort-Tage')
-      + ' ('+fmtH(m.reserveH)+').';
+      + (m.onsiteDays===1 ? ' reservierter Vor-Ort-Tag.' : ' reservierte Vor-Ort-Tage.');
   }
   return s;
-}
-
-function distributeRemoteBudget(freeBudget, monthData, rR) {
-  const alloc = monthData.map(()=>0), locked = monthData.map(()=>false);
-  let left = freeBudget;
-  for (let iter = 0; iter < 10; iter++) {
-    const ul = monthData.map((_,i)=>i).filter(i=>!locked[i]);
-    if (!ul.length) break;
-    const tw = ul.reduce((s,i)=>s+monthData[i].weight, 0);
-    if (!tw) break;
-    let anyLock = false;
-    ul.forEach(i => {
-      const share = rR > 0 ? left*(monthData[i].weight/tw)/rR : 0;
-      if (share >= monthData[i].maxH) { alloc[i]=monthData[i].maxH; locked[i]=true; anyLock=true; }
-      else alloc[i] = Math.max(0, share);
-    });
-    if (!anyLock) break;
-    const lc = monthData.reduce((s,m,i)=>locked[i]?s+alloc[i]*rR:s, 0);
-    left = freeBudget - lc;
-  }
-  return alloc;
 }
 
 function calc() {
@@ -459,24 +442,28 @@ function calc() {
 
   document.getElementById('rateHint').textContent =
     '= '+fmtD(rR,2)+' € / '+fmtD(rO,2)+' € pro Stunde';
+  const bookingPct = parseFloat(document.getElementById('bookingPct').value) || 0;
+  const bookedHpd  = hpd * bookingPct / 100;
+  document.getElementById('bookingHint').textContent = '= '+fmtD(bookedHpd,1)+'h pro Tag';
 
   const spentCost = spentR*rR + spentO*rO;
 
-  const reserveByIdx = {}; let totalReserveH = 0;
+  // On-site work happens in whole days, billed at the on-site day rate.
+  const reserveByIdx = {}; let totalReserveDays = 0;
   QUARTER_MONTHS.forEach((_,i) => {
-    const cb = document.getElementById('rcb'+i), inp = document.getElementById('rh'+i);
+    const cb = document.getElementById('rcb'+i), inp = document.getElementById('rd'+i);
     if (cb && cb.classList.contains('checked') && inp) {
-      const h = parseFloat(inp.value)||0; reserveByIdx[i]=h; totalReserveH+=h;
+      const d = parseFloat(inp.value)||0; reserveByIdx[i]=d; totalReserveDays+=d;
     } else reserveByIdx[i]=0;
   });
-  const totalReserveCost = totalReserveH * rO;
+  const totalReserveCost = totalReserveDays * drO;
 
   QUARTER_MONTHS.forEach((_,i) => {
     const el = document.getElementById('rcost'+i);
-    if (el) el.textContent = fmt((reserveByIdx[i]||0)*rO)+' €';
+    if (el) el.textContent = fmt((reserveByIdx[i]||0)*drO)+' €';
   });
   const rTot = document.getElementById('reserveTotalDisplay');
-  if (rTot) rTot.textContent = fmtH(totalReserveH)+' · '+fmt(totalReserveCost)+' €';
+  if (rTot) rTot.textContent = fmtDays(totalReserveDays)+(totalReserveDays===1?' Tag':' Tage')+' · '+fmt(totalReserveCost)+' €';
 
   const note = document.getElementById('spentNote');
   if (spentR > 0 || spentO > 0) {
@@ -489,7 +476,7 @@ function calc() {
   const today = new Date(); today.setHours(0,0,0,0);
 
   const months = QUARTER_MONTHS.map((q,i) => {
-    const availH  = parseFloat(document.getElementById('mh'+i)?.value)||0;
+    const availDays = parseFloat(document.getElementById('md'+i)?.value)||0;
     const mStart  = new Date(q.year,q.month,1), mEnd = new Date(q.year,q.month+1,0);
     let isPast  = mEnd < today;
     let isCurrent = !isPast && mStart <= today;
@@ -503,32 +490,29 @@ function calc() {
     // On the last workday of the month today itself counts as 1 effective day
     const todayIsWorkday = isCurrent && today.getDay()!==0 && today.getDay()!==6 && today>=mStart && today<=mEnd;
     const effectiveWorkdays = (workdaysRemaining===0 && todayIsWorkday) ? 1 : workdaysRemaining;
-    // Verbleibende verfügbare Stunden: availH anteilig nach verbleibenden Arbeitstagen
-    const availHRemaining = workdaysTotal > 0 ? availH * (effectiveWorkdays / workdaysTotal) : 0;
+    // Remaining available days: availDays pro rata to the remaining calendar workdays
+    const availDaysRemaining = workdaysTotal > 0 ? availDays * (effectiveWorkdays / workdaysTotal) : 0;
     // Wochenende am Monatsende: kein Arbeitstag mehr → Monat gilt als abgeschlossen (aber nicht wenn heute selbst noch Arbeitstag ist)
     if (isCurrent && workdaysRemaining === 0 && !todayIsWorkday) { isPast = true; isCurrent = false; }
     const mSpentR = parseFloat(document.getElementById('sr'+i)?.value)||0;
     const mSpentO = parseFloat(document.getElementById('so'+i)?.value)||0;
-    // Vor-Ort-Arbeit findet an ganzen Tagen statt: reservierte Stunden in Tage
-    // umrechnen und diese Tage aus den Remote-Arbeitstagen herausnehmen.
-    const reserveH   = reserveByIdx[i]||0;
-    const onsiteDays = hpd > 0 ? reserveH/hpd : 0;
-    const remoteDays = Math.max(0, effectiveWorkdays - onsiteDays);
-    return { ...q, availH, availHRemaining, isPast, isCurrent, isFuture, workdaysRemaining, effectiveWorkdays, reserveH, onsiteDays, remoteDays, mSpentR, mSpentO };
+    // Reserved on-site days are taken out of the available days.
+    const onsiteDays = reserveByIdx[i]||0;
+    const remoteDays = Math.max(0, availDaysRemaining - onsiteDays);
+    return { ...q, availDays, availDaysRemaining, isPast, isCurrent, isFuture, workdaysRemaining, effectiveWorkdays, onsiteDays, remoteDays, mSpentR, mSpentO };
   });
 
-  const remaining  = months.filter(m=>!m.isPast);
+  // The free budget is spread evenly over all remaining remote days, so every
+  // month gets the same hours per remote day. On-site days lower that value.
   const freeBudget = budget - spentCost - totalReserveCost;
-  const monthData  = remaining.map(m=>({...m, maxH: m.remoteDays*hpd, weight: m.availHRemaining}));
-  const alloc      = distributeRemoteBudget(freeBudget, monthData, rR);
+  const totalRemoteDays = months.filter(m=>!m.isPast).reduce((s,m)=>s+m.remoteDays, 0);
+  const remoteHpd = totalRemoteDays > 0 && rR > 0 ? Math.max(0, freeBudget/rR/totalRemoteDays) : null;
 
-  let ri = 0;
   const finalMonths = months.map(m => {
     if (m.isPast) return {...m, hAlloc:0, budgetAlloc:0, hPerDay:null};
-    const hAlloc  = alloc[ri]||0;
-    const budgetAlloc = hAlloc*rR + m.reserveH*rO;
-    const hPerDay = m.remoteDays > 0 ? hAlloc/m.remoteDays : null;
-    ri++;
+    const hPerDay = m.remoteDays > 0 ? remoteHpd : null;
+    const hAlloc  = hPerDay !== null ? hPerDay*m.remoteDays : 0;
+    const budgetAlloc = hAlloc*rR + m.onsiteDays*drO;
     return {...m, hAlloc, budgetAlloc, hPerDay};
   });
 
@@ -585,7 +569,7 @@ function calc() {
           <span class="br-dot" style="background:#59B2A5"></span>
           <span class="br-label">Reserviert vor Ort</span>
           <span class="br-pct">${Math.round(pctR)}%</span>
-          <span class="br-val">${fmt(totalReserveCost)} € <span style="font-weight:400;color:var(--text-muted);font-size:0.7rem;">${totalReserveH>0?'('+reserveMonthLabel+')':''}</span></span>
+          <span class="br-val">${fmt(totalReserveCost)} € <span style="font-weight:400;color:var(--text-muted);font-size:0.7rem;">${totalReserveDays>0?'('+reserveMonthLabel+')':''}</span></span>
         </div>
         <div class="budget-row budget-row-available">
           <span class="br-dot" style="background:var(--border)"></span>
@@ -608,7 +592,7 @@ function calc() {
           ${m.mSpentR > 0 ? `<span><strong>${fmtH(m.mSpentR)}</strong> remote genutzt</span>` : ''}
           ${m.mSpentO > 0 ? `<span><strong>${fmtH(m.mSpentO)}</strong> vor Ort genutzt</span>` : ''}
           ${!hasSpent ? `<span><strong>0h</strong> genutzt</span>` : ''}
-          <span style="color:var(--text-muted)">${fmtH(m.availH)} verfügbar</span>
+          <span style="color:var(--text-muted)">${fmtDays(m.availDays)} Tage verfügbar</span>
         </div>
         ${hasSpent ? `<div class="month-row2"><span>Kosten: <strong>${fmt(spentCostM)} €</strong></span></div>` : ''}
       </div>
@@ -626,8 +610,8 @@ function calc() {
         <div class="month-name">${MONTH_NAMES[m.month]} ${m.year} <span class="month-tag ${tag}">${label}</span></div>
         <div class="month-row1">
           <span><strong>${fmtH(m.hAlloc)}</strong> remote</span>
-          ${m.reserveH>0?`<span><strong>${onsiteLabel(m.onsiteDays, m.reserveH)}</strong> geplant</span>`:''}
-          <span><strong>${m.workdaysRemaining}</strong> Arbeitstage</span>
+          ${m.onsiteDays>0?`<span><strong>${onsiteLabel(m.onsiteDays, m.onsiteDays*drO)}</strong> geplant</span>`:''}
+          <span><strong>${fmtDays(Math.round(m.remoteDays*10)/10)}</strong> Remote-Tage</span>
         </div>
         <div class="month-row2">
           <span>Budget gesamt: <strong>${fmt(m.budgetAlloc)} €</strong></span>
@@ -636,7 +620,7 @@ function calc() {
       <div class="total-hpd">
         <div class="hpd-value">${m.hPerDay!==null?fmtD(hpdr,1):'–'}</div>
         <div class="hpd-label">h/Remote-Tag</div>
-        <div class="hpd-sollwert">Sollwert für Budgetrahmen</div>
+        <div class="hpd-sollwert">${m.hPerDay!==null && hpd>0 ? fmt(hpdr/hpd*100)+' % (gebucht '+fmt(bookingPct)+' %)' : 'Sollwert für Budgetrahmen'}</div>
       </div>
     </div>`;
   });
@@ -649,13 +633,13 @@ const LS_KEY = 'arbeitszeit_kalkulator_v3';
 
 function saveState() {
   const state = { contractKey: getContractKey() };
-  ['budget','dayRateRemote','dayRateOnsite','hoursPerDay','startDate','endDate'].forEach(id => {
+  ['budget','dayRateRemote','dayRateOnsite','hoursPerDay','bookingPct','startDate','endDate'].forEach(id => {
     const el = document.getElementById(id); if (el) state[id] = el.value;
   });
   state.months = QUARTER_MONTHS.map((_,i) => {
-    const cb=document.getElementById('rcb'+i), inp=document.getElementById('rh'+i), mh=document.getElementById('mh'+i);
+    const cb=document.getElementById('rcb'+i), inp=document.getElementById('rd'+i), md=document.getElementById('md'+i);
     const sr=document.getElementById('sr'+i), so=document.getElementById('so'+i);
-    return { availH: mh?mh.value:'', reserveActive: cb?cb.classList.contains('checked'):false, reserveH: inp?inp.value:0,
+    return { availDays: md?md.value:'', reserveActive: cb?cb.classList.contains('checked'):false, reserveDays: inp?inp.value:0,
              spentR: sr?sr.value:0, spentO: so?so.value:0 };
   });
   try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch(e) {}
@@ -664,7 +648,7 @@ function saveState() {
 function loadSavedState() {
   let state; try { state=JSON.parse(localStorage.getItem(LS_KEY)); } catch(e) {}
   if (!state) return;
-  ['budget','dayRateRemote','dayRateOnsite','hoursPerDay'].forEach(id => {
+  ['budget','dayRateRemote','dayRateOnsite','hoursPerDay','bookingPct'].forEach(id => {
     const el=document.getElementById(id); if (el && state[id]!==undefined) el.value=state[id];
   });
   let datesChanged = false;
@@ -675,11 +659,12 @@ function loadSavedState() {
   if (datesChanged) initMonths();
   if (state.contractKey === getContractKey() && state.months) {
     state.months.forEach((m,i) => {
-      const mh=document.getElementById('mh'+i), cb=document.getElementById('rcb'+i),
-            inp=document.getElementById('rh'+i), row=document.getElementById('rrow'+i);
+      const md=document.getElementById('md'+i), cb=document.getElementById('rcb'+i),
+            inp=document.getElementById('rd'+i), row=document.getElementById('rrow'+i);
       const sr=document.getElementById('sr'+i), so=document.getElementById('so'+i);
-      if (mh && m.availH!==undefined)  mh.value=m.availH;
-      if (inp && m.reserveH!==undefined) inp.value=m.reserveH;
+      // Old saves stored hours (availH/reserveH); they are ignored and fall back to defaults.
+      if (md && m.availDays!==undefined)  md.value=m.availDays;
+      if (inp && m.reserveDays!==undefined) inp.value=m.reserveDays;
       if (sr && m.spentR!==undefined) sr.value=m.spentR;
       if (so && m.spentO!==undefined) so.value=m.spentO;
       if (cb && m.reserveActive) {
@@ -704,11 +689,10 @@ function loadSavedState() {
   calc();
 })();
 
-['budget','dayRateRemote','dayRateOnsite'].forEach(id => {
+['budget','dayRateRemote','dayRateOnsite','hoursPerDay','bookingPct'].forEach(id => {
   const el=document.getElementById(id);
   if (el) el.addEventListener('input', ()=>{ calc(); saveState(); });
 });
-document.getElementById('hoursPerDay').addEventListener('input', ()=>{ renderMonthInputs(); calc(); saveState(); });
 document.getElementById('startDate').addEventListener('change', ()=>{ initMonths(); calc(); saveState(); });
 document.getElementById('endDate').addEventListener('change',   ()=>{ initMonths(); calc(); saveState(); });
 document.getElementById('monthInputs').addEventListener('input', ()=>{ calc(); saveState(); });
@@ -739,7 +723,7 @@ function openRenewModal() {
     spentCost  += (parseFloat(document.getElementById('so'+i)?.value)||0) * rO;
     const cb = document.getElementById('rcb'+i);
     if (cb && cb.classList.contains('checked'))
-      reserveCost += (parseFloat(document.getElementById('rh'+i)?.value)||0) * rO;
+      reserveCost += (parseFloat(document.getElementById('rd'+i)?.value)||0) * rO * hpd; // days × day rate
   });
   document.getElementById('rnSpentDisplay').textContent = fmt(spentCost + reserveCost);
 
@@ -769,7 +753,7 @@ function updateRnPreview() {
     spentCost  += (parseFloat(document.getElementById('so'+i)?.value)||0) * rO;
     const cb = document.getElementById('rcb'+i);
     if (cb && cb.classList.contains('checked'))
-      reserveCost += (parseFloat(document.getElementById('rh'+i)?.value)||0) * rO;
+      reserveCost += (parseFloat(document.getElementById('rd'+i)?.value)||0) * rO * hpd; // days × day rate
   });
   const oldBudget = parseFloat(document.getElementById('budget').value) || 0;
   const rest = Math.max(0, oldBudget - spentCost - reserveCost);
@@ -795,7 +779,7 @@ function confirmRenew() {
     spentCost  += (parseFloat(document.getElementById('so'+i)?.value)||0) * rO;
     const cb = document.getElementById('rcb'+i);
     if (cb && cb.classList.contains('checked'))
-      reserveCost += (parseFloat(document.getElementById('rh'+i)?.value)||0) * rO;
+      reserveCost += (parseFloat(document.getElementById('rd'+i)?.value)||0) * rO * hpd; // days × day rate
   });
   const oldBudget = parseFloat(document.getElementById('budget').value) || 0;
   const newTotalBudget = carryover ? oldBudget + newBudget : spentCost + reserveCost + newBudget;
