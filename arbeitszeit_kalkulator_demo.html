@@ -28,6 +28,7 @@
     --warn-bg: #fff8e6; --warn-text: #8a6200;
     --ok-bg: #e8f6f4; --ok-text: #246b61;
     --danger-bg: #fef0f0; --danger-text: #b83232;
+    --warn-strong: #d97706; --danger-strong: #dc2626;
     --shadow-sm: 0 1px 3px rgba(89,178,165,0.08);
     --radius: 12px; --radius-sm: 8px;
   }
@@ -37,13 +38,13 @@
   header { background: var(--teal); padding: 1.5rem 2rem; position: relative; overflow: hidden; display:flex; justify-content:space-between; align-items:center; }
   header::after  { content:''; position:absolute; right:-40px; top:-40px; width:200px; height:200px; border-radius:50%; background:rgba(255,255,255,0.08); }
   header::before { content:''; position:absolute; right:60px; bottom:-60px; width:150px; height:150px; border-radius:50%; background:rgba(255,255,255,0.05); }
-  header h1 { font-size:1.4rem; font-weight:600; color:#fff; letter-spacing:-0.02em; display:flex; align-items:center; gap:10px; }
+  header h1 { font-size:1.4rem; font-weight:600; color:#fff; letter-spacing:-0.02em; }
   header p  { font-size:0.8rem; color:rgba(255,255,255,0.75); margin-top:2px; font-weight:300; }
-  .demo-badge { background:#e84040; color:#fff; font-size:0.6rem; font-weight:700; padding:3px 9px; border-radius:5px; letter-spacing:0.1em; text-transform:uppercase; flex-shrink:0; }
-  .demo-bar { background:#c0392b; padding:0.55rem 2rem; text-align:center; }
-  .demo-bar span { color:#fff; font-size:0.72rem; font-weight:600; letter-spacing:0.06em; }
 
   .today-banner { background:var(--teal-deeper); padding:0.9rem 2rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+  .demo-badge { background:#e84040; color:#fff; font-size:0.6rem; font-weight:700; padding:3px 9px; border-radius:5px; letter-spacing:0.1em; text-transform:uppercase; flex-shrink:0; vertical-align:middle; margin-left:8px; }
+  .demo-bar { background:#c0392b; padding:0.55rem 2rem; text-align:center; }
+  .demo-bar span { color:#fff; font-size:0.72rem; font-weight:600; letter-spacing:0.06em; }
   .tb-label  { font-size:0.72rem; color:rgba(255,255,255,0.65); }
   .tb-value  { font-family:'DM Mono',monospace; font-size:1.6rem; font-weight:500; color:#fff; line-height:1.1; }
   .tb-sub    { font-size:0.72rem; color:rgba(255,255,255,0.6); margin-top:2px; max-width:48ch; }
@@ -68,6 +69,7 @@
 
   .inline-note { font-size:0.75rem; color:var(--text-secondary); margin-top:8px; padding:8px 12px; background:var(--teal-light); border-radius:var(--radius-sm); border-left:3px solid var(--teal); }
 
+  /* Stacked bar */
   .stacked-bar-wrap { margin-top:10px; }
   .stacked-bar { height:6px; border-radius:4px; background:var(--border-light); overflow:hidden; display:flex; }
   .sb-spent   { background: #246b61; height:100%; transition:width 0.3s; }
@@ -76,6 +78,7 @@
   .sl-item { display:flex; align-items:center; gap:5px; font-size:0.65rem; color:var(--text-muted); }
   .sl-dot  { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
 
+  /* Metrics */
   .results { margin-top:1.5rem; }
   .results-header { font-size:0.7rem; font-weight:600; color:var(--teal-dark); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:1rem; }
   .metric-grid { display:grid; grid-template-columns:1fr; gap:10px; margin-bottom:1.25rem; }
@@ -98,6 +101,7 @@
   .br-val.danger { color:var(--danger-text); }
   .br-val.ok     { color:var(--ok-text); }
 
+  /* Month cards */
   .month-cards { display:flex; flex-direction:column; gap:8px; }
   .month-card { background:var(--white); border:1px solid var(--border-light); border-radius:var(--radius); padding:1rem 1.25rem; display:grid; grid-template-columns:1fr auto; align-items:start; gap:16px; box-shadow:var(--shadow-sm); }
   .month-card.current-month { border-color:var(--teal); background:var(--teal-light); }
@@ -121,6 +125,28 @@
   .badge-danger { background:var(--danger-bg); color:var(--danger-text); }
   .badge-past   { background:var(--surface);   color:var(--text-muted); }
 
+  /* Status alerts: color reinforces, icon + title + reason carry the meaning */
+  .alerts { display:flex; flex-direction:column; gap:8px; margin-bottom:12px; }
+  .alerts:empty { display:none; }
+  .alert { display:grid; grid-template-columns:20px 1fr; gap:10px; align-items:start; padding:12px 14px; border-radius:var(--radius-sm); border:1px solid; border-left-width:4px; }
+  .alert svg { width:20px; height:20px; margin-top:1px; }
+  .alert-title { font-size:0.85rem; font-weight:600; line-height:1.3; }
+  .alert-text  { font-size:0.78rem; line-height:1.45; margin-top:2px; color:var(--text-primary); }
+  .alert-danger { background:var(--danger-bg); border-color:#f5c2c2; border-left-color:var(--danger-strong); }
+  .alert-danger .alert-title, .alert-danger svg { color:var(--danger-strong); }
+  .alert-warn   { background:var(--warn-bg); border-color:#f3dfa8; border-left-color:var(--warn-strong); }
+  .alert-warn .alert-title, .alert-warn svg { color:var(--warn-text); }
+
+  .month-text { font-size:0.82rem; line-height:1.45; color:var(--text-secondary); }
+  .month-text strong { color:var(--text-primary); font-weight:600; }
+  .util { width:110px; margin-top:8px; }
+  .util-bar { position:relative; height:6px; border-radius:3px; background:var(--border-light); }
+  .util-fill { height:100%; border-radius:3px; background:var(--teal); }
+  .util-mark { position:absolute; top:-3px; width:2px; height:12px; background:var(--text-secondary); border-radius:1px; }
+  .util-label { font-size:0.65rem; color:var(--text-muted); margin-top:5px; text-align:right; line-height:1.3; }
+
+  /* Reserve rows */
+  /* Spent table */
   .spent-header { display:grid; grid-template-columns:1fr 100px 100px 90px; gap:10px; padding:0 0 6px; font-size:0.68rem; font-weight:500; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; border-bottom:1px solid var(--border-light); margin-bottom:4px; }
   .spent-row    { display:grid; grid-template-columns:1fr 100px 100px 90px; gap:10px; align-items:center; padding:6px 0; border-bottom:1px solid var(--border-light); }
   .spent-row:last-child { border-bottom:none; }
@@ -140,6 +166,32 @@
 
   #toast { position:fixed; bottom:2rem; left:50%; transform:translateX(-50%) translateY(12px); background:var(--teal-deeper); color:#fff; padding:10px 20px; border-radius:99px; font-size:0.8rem; font-weight:500; opacity:0; pointer-events:none; transition:opacity 0.25s,transform 0.25s; white-space:nowrap; z-index:999; }
   #toast.visible { opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* ── Modal: Vertragsverlängerung ───────────────────────── */
+  #renewOverlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:200; align-items:center; justify-content:center; }
+  #renewOverlay.open { display:flex; }
+  #renewModal { background:#fff; border-radius:var(--radius); padding:1.75rem; width:min(540px,92vw); box-shadow:0 20px 60px rgba(0,0,0,0.2); }
+  .rn-title { font-size:1.05rem; font-weight:600; color:var(--text-primary); margin-bottom:0.75rem; }
+  .rn-meta { font-size:0.78rem; color:var(--text-secondary); background:var(--surface); padding:8px 12px; border-radius:var(--radius-sm); display:flex; gap:16px; flex-wrap:wrap; margin-bottom:1.25rem; }
+  .rn-meta strong { color:var(--text-primary); }
+  .rn-row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
+  .rn-row2 label { font-size:0.72rem; font-weight:500; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; display:block; margin-bottom:4px; }
+  .rn-row2 input { width:100%; box-sizing:border-box; height:38px; padding:0 10px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:0.85rem; font-family:'DM Sans',sans-serif; color:var(--text-primary); background:#fff; }
+  .rn-row2 input:focus { outline:none; border-color:var(--teal); }
+  .rn-var-label { font-size:0.72rem; font-weight:500; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:8px; margin-top:4px; }
+  .rn-option { display:flex; align-items:flex-start; gap:10px; padding:10px 12px; border:1.5px solid var(--border); border-radius:var(--radius-sm); margin-bottom:6px; cursor:pointer; transition:border-color .15s,background .15s; }
+  .rn-option:has(input:checked) { border-color:var(--teal); background:var(--teal-light); }
+  .rn-option input[type=radio] { margin-top:3px; accent-color:var(--teal); flex-shrink:0; }
+  .rn-opt-title { font-size:0.85rem; font-weight:500; color:var(--text-primary); }
+  .rn-opt-sub { font-size:0.75rem; color:var(--text-secondary); margin-top:2px; line-height:1.4; }
+  .rn-hint { font-size:0.75rem; color:#1a6b2e; background:#e8f5ed; padding:8px 12px; border-radius:var(--radius-sm); margin-top:10px; margin-bottom:1.25rem; }
+  .rn-actions { display:flex; justify-content:flex-end; gap:10px; }
+  .rn-btn-cancel { height:38px; padding:0 16px; border:1.5px solid var(--border); border-radius:var(--radius-sm); background:transparent; color:var(--text-secondary); font-family:'DM Sans',sans-serif; font-size:0.85rem; cursor:pointer; }
+  .rn-btn-cancel:hover { background:var(--surface); }
+  .rn-btn-confirm { height:38px; padding:0 20px; border:none; border-radius:var(--radius-sm); background:var(--teal); color:#fff; font-family:'DM Sans',sans-serif; font-size:0.85rem; font-weight:500; cursor:pointer; }
+  .rn-btn-confirm:hover { background:var(--teal-dark); }
+  .btn-renew { background:none; border:1.5px solid var(--teal); color:var(--teal-dark); border-radius:20px; padding:3px 11px; font-size:0.7rem; font-weight:500; cursor:pointer; font-family:'DM Sans',sans-serif; transition:background .15s; margin-top:6px; display:inline-block; }
+  .btn-renew:hover { background:var(--teal-light); }
 </style>
 </head>
 <body>
@@ -150,13 +202,13 @@
     <p>Beispieldaten Q1 2026 · Simuliertes Datum: 10. Februar 2026 · <span id="versionLabel"></span></p>
   </div>
   <a href="https://www.colenet.de" target="_blank" rel="noopener" style="display:flex;text-decoration:none;position:relative;z-index:1">
-    <div style="background:rgba(255,255,255,0.95);border-radius:7px;padding:5px 10px;display:flex;align-items:center;height:38px;box-sizing:border-box;cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">
-      <img src="data:image/png;base64,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" alt="Colenet" style="height:26px;width:auto;display:block">
+    <div style="background:rgba(255,255,255,0.95);border-radius:7px;height:32px;padding:0 10px;overflow:hidden;display:flex;align-items:flex-start;cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">
+      <img src="data:image/png;base64,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" alt="Colenet – messbar schneller" style="height:40px;width:auto;display:block;margin-top:-2px">
     </div>
   </a>
 </header>
 <div class="demo-bar">
-  <span>&#9888; DEMO-ANSICHT &nbsp;·&nbsp; Alle Zahlen sind fiktive Beispieldaten &nbsp;·&nbsp; Keine echten Projektdaten</span>
+  <span>DEMO-ANSICHT &nbsp;·&nbsp; Alle Zahlen sind fiktive Beispieldaten &nbsp;·&nbsp; Keine echten Projektdaten</span>
 </div>
 <div class="today-banner">
   <div>
@@ -172,54 +224,62 @@
 
 <div class="container">
 
-  <div class="card">
+  <form class="card" autocomplete="off" onsubmit="return false;">
     <p class="card-title">Grundkonfiguration</p>
     <div class="row3">
-      <div class="field"><label>Vertragsbeginn</label><input type="date" id="startDate"></div>
-      <div class="field"><label>Vertragsende</label><input type="date" id="endDate"></div>
-      <div class="field"><label>Gesamtbudget (€)</label><input type="number" id="budget" step="100"></div>
+      <div class="field"><label>Vertragsbeginn</label><input type="date" id="startDate" autocomplete="off"></div>
+      <div class="field"><label>Vertragsende</label><input type="date" id="endDate" autocomplete="off"><button class="btn-renew" onclick="openRenewModal()">Verlängern →</button></div>
+      <div class="field"><label>Gesamtbudget (€)</label><input type="number" id="budget" value="25000" step="100" autocomplete="off"></div>
     </div>
     <div class="row3">
       <div class="field">
         <label>Tagessatz Remote (€)</label>
-        <input type="number" id="dayRateRemote" step="10">
+        <input type="number" id="dayRateRemote" value="1020" step="10" autocomplete="off">
       </div>
       <div class="field">
         <label>Tagessatz Vor Ort (€)</label>
-        <input type="number" id="dayRateOnsite" step="10">
+        <input type="number" id="dayRateOnsite" value="1120" step="10" autocomplete="off">
       </div>
       <div class="field">
-        <label>Stunden pro Tag</label>
-        <input type="number" id="hoursPerDay" step="0.5" min="1" max="12">
-        <span class="hint" id="rateHint"></span>
+        <label>Stunden je Tagessatz</label>
+        <input type="number" id="hoursPerDay" value="8" step="0.5" min="1" max="12" autocomplete="off">
+        <span class="hint" id="rateHint">= 127,50 € / 140,00 € pro Stunde</span>
       </div>
     </div>
-  </div>
+    <div class="row3">
+      <div class="field">
+        <label>Buchungsumfang (%)</label>
+        <input type="number" id="bookingPct" value="50" step="5" min="1" max="100" autocomplete="off">
+        <span class="hint" id="bookingHint">= 4,0h pro Tag</span>
+      </div>
+    </div>
+  </form>
 
-  <div class="card">
-    <p class="card-title">Verfügbare Stunden je Monat</p>
+  <form class="card" autocomplete="off" onsubmit="return false;">
+    <p class="card-title">Verfügbare Tage je Monat</p>
     <div class="row3" id="monthInputs"></div>
-    <p style="font-size:0.7rem;color:var(--text-muted);margin-top:4px;">Mo–Fr × Stunden/Tag, minus Feiertage &amp; Urlaub</p>
-  </div>
+    <p style="font-size:0.7rem;color:var(--text-muted);margin-top:4px;">Arbeitstage Mo–Fr, abzüglich Feiertage, Urlaub &amp; Schulungen</p>
+  </form>
 
-  <div class="card">
+  <form class="card" autocomplete="off" onsubmit="return false;">
     <p class="card-title">Bereits geleistete Arbeitszeit</p>
     <div id="spentMonthInputs"></div>
     <div id="spentNote" class="inline-note" style="display:none"></div>
-  </div>
+  </form>
 
-  <div class="card">
+  <form class="card" autocomplete="off" onsubmit="return false;">
     <p class="card-title">Reservierung zukünftige Vor-Ort-Tage</p>
-    <p style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:1rem;">Aktiviere pro Monat ob ein Vor-Ort-Einsatz erwartet wird und wie viele Stunden.</p>
+    <p style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:1rem;">Aktiviere pro Monat ob ein Vor-Ort-Einsatz erwartet wird und an wie vielen Tagen.</p>
     <div id="reserveMonthInputs"></div>
     <div style="margin-top:1rem;padding-top:0.75rem;border-top:1px solid var(--border-light);display:flex;justify-content:space-between;align-items:center;">
       <span style="font-size:0.75rem;color:var(--text-secondary);">Gesamt reserviert</span>
-      <span id="reserveTotalDisplay" style="font-family:'DM Mono',monospace;font-size:0.9rem;font-weight:500;color:var(--teal-deeper);">0h · 0 €</span>
+      <span id="reserveTotalDisplay" style="font-family:'DM Mono',monospace;font-size:0.9rem;font-weight:500;color:var(--teal-deeper);">0 Tage · 0 €</span>
     </div>
-  </div>
+  </form>
 
   <div class="results" id="results" style="display:none">
     <p class="results-header">Ergebnis</p>
+    <div class="alerts" id="alerts"></div>
     <div class="metric-grid" id="metricsTop"></div>
     <div class="month-cards" id="monthCards"></div>
   </div>
@@ -227,17 +287,23 @@
 </div>
 
 <script>
-const VERSION = '1.0';
+const VERSION = '1.3';
 const MONTH_NAMES = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 let QUARTER_MONTHS = [];
 
-// Simuliertes Datum für die Demo
+// Simulated date for the demo
 const DEMO_TODAY = new Date('2026-02-10T12:00:00');
 
 function countWorkdays(year, month) {
   let n = 0, d = new Date(year, month, 1);
   while (d.getMonth() === month) { if (d.getDay() !== 0 && d.getDay() !== 6) n++; d.setDate(d.getDate()+1); }
   return n;
+}
+
+function getContractKey() {
+  const s = document.getElementById('startDate')?.value || '';
+  const e = document.getElementById('endDate')?.value   || '';
+  return s + '_' + e;
 }
 
 function initMonths() {
@@ -247,6 +313,23 @@ function initMonths() {
   const start = new Date(startVal + 'T00:00:00');
   const end   = new Date(endVal   + 'T00:00:00');
   if (start > end) return;
+
+  // Preserve existing inputs keyed by "YYYY-M" before wiping the DOM
+  const prevSpent   = {};
+  const prevAvailD  = {};
+  const prevReserve = {};
+  QUARTER_MONTHS.forEach((q, i) => {
+    const key = q.year + '-' + q.month;
+    const sr = document.getElementById('sr'+i);
+    const so = document.getElementById('so'+i);
+    const md = document.getElementById('md'+i);
+    const rd = document.getElementById('rd'+i);
+    const rcb = document.getElementById('rcb'+i);
+    if (sr || so) prevSpent[key]   = { r: sr ? sr.value : '0', o: so ? so.value : '0' };
+    if (md)       prevAvailD[key]  = md.value;
+    if (rd)       prevReserve[key] = { d: rd.value, active: rcb ? rcb.classList.contains('checked') : false };
+  });
+
   QUARTER_MONTHS = [];
   let y = start.getFullYear(), m = start.getMonth();
   const endY = end.getFullYear(), endM = end.getMonth();
@@ -257,37 +340,61 @@ function initMonths() {
   renderMonthInputs();
   renderReserveInputs();
   renderSpentInputs();
+
+  // Restore values for months that existed before
+  QUARTER_MONTHS.forEach((q, i) => {
+    const key = q.year + '-' + q.month;
+    if (prevSpent[key]) {
+      const sr = document.getElementById('sr'+i);
+      const so = document.getElementById('so'+i);
+      if (sr) sr.value = prevSpent[key].r;
+      if (so) so.value = prevSpent[key].o;
+    }
+    if (prevAvailD[key]) {
+      const md = document.getElementById('md'+i);
+      if (md) md.value = prevAvailD[key];
+    }
+    if (prevReserve[key]) {
+      const rd  = document.getElementById('rd'+i);
+      const rcb = document.getElementById('rcb'+i);
+      const row = document.getElementById('rrow'+i);
+      if (rd) rd.value = prevReserve[key].d;
+      if (prevReserve[key].active && rcb) {
+        rcb.classList.add('checked');
+        if (row) row.classList.remove('inactive');
+        if (rd)  { rd.style.opacity = '1'; rd.style.pointerEvents = 'auto'; }
+      }
+    }
+  });
 }
 
 function renderMonthInputs() {
-  const hpd = parseFloat(document.getElementById('hoursPerDay').value) || 8;
   const c = document.getElementById('monthInputs');
   c.innerHTML = '';
   QUARTER_MONTHS.forEach((q, i) => {
     const wd = countWorkdays(q.year, q.month);
-    const def = Math.round(wd * hpd);
     c.innerHTML += `<div class="field">
       <label>${MONTH_NAMES[q.month]}</label>
-      <input type="number" id="mh${i}" value="${def}" step="1" min="0">
-      <span class="hint">${wd} AT · ${def}h Standard</span>
+      <input type="number" id="md${i}" value="${wd}" step="1" min="0" max="${wd}" autocomplete="off">
+      <span class="hint">${wd} Arbeitstage im Kalender</span>
     </div>`;
   });
   QUARTER_MONTHS.forEach((_, i) =>
-    document.getElementById('mh'+i).addEventListener('input', () => calc())
+    document.getElementById('md'+i).addEventListener('input', () => { calc(); saveState(); })
   );
 }
 
 function toggleReserve(i) {
   const cb  = document.getElementById('rcb'+i);
   const row = document.getElementById('rrow'+i);
-  const inp = document.getElementById('rh'+i);
+  const inp = document.getElementById('rd'+i);
   cb.classList.toggle('checked');
   const active = cb.classList.contains('checked');
   row.classList.toggle('inactive', !active);
   inp.style.opacity       = active ? '1'    : '0.35';
   inp.style.pointerEvents = active ? 'auto' : 'none';
-  if (!active) inp.value = 0;
-  calc();
+  inp.value = active ? Math.max(1, parseFloat(inp.value)||0) : 0;
+  calc(); saveState();
 }
 
 function renderReserveInputs() {
@@ -302,7 +409,7 @@ function renderReserveInputs() {
         <svg width="10" height="10" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="white" stroke-width="2.5" fill="none"/></svg>
       </div>
       <span class="reserve-month-label">${MONTH_NAMES[q.month]} ${q.year}</span>
-      <input type="number" id="rh${i}" value="8" step="1" min="0" style="opacity:0.35;pointer-events:none;" oninput="calc()">
+      <input type="number" id="rd${i}" value="0" step="1" min="0" style="opacity:0.35;pointer-events:none;" oninput="calc();saveState()" autocomplete="off">
       <span class="reserve-cost-label" id="rcost${i}">0 €</span>
     </div>`;
   });
@@ -311,6 +418,7 @@ function renderReserveInputs() {
 function renderSpentInputs() {
   const c = document.getElementById('spentMonthInputs');
   c.innerHTML = '';
+  // Header row
   c.innerHTML += `<div class="spent-header">
     <span></span>
     <span>Remote (h)</span>
@@ -320,48 +428,40 @@ function renderSpentInputs() {
   QUARTER_MONTHS.forEach((q, i) => {
     c.innerHTML += `<div class="spent-row" id="srow${i}">
       <span class="spent-month">${MONTH_NAMES[q.month]}</span>
-      <input type="number" id="sr${i}" value="0" step="0.5" min="0" oninput="calc()">
-      <input type="number" id="so${i}" value="0" step="0.5" min="0" oninput="calc()">
+      <input type="number" id="sr${i}" value="0" step="0.25" min="0" oninput="calc();saveState()" autocomplete="off">
+      <input type="number" id="so${i}" value="0" step="0.25" min="0" oninput="calc();saveState()" autocomplete="off">
       <span class="spent-cost" id="scost${i}">0 €</span>
     </div>`;
   });
 }
 
 function fmt(n)      { return n.toLocaleString('de-DE', {minimumFractionDigits:0, maximumFractionDigits:0}); }
-function fmtH(n)     { return n.toFixed(1)+'h'; }
+function fmtH(n)     { return fmtD(n,1)+' h'; }
 function fmtD(n, d)  { return n.toLocaleString('de-DE', {minimumFractionDigits:d, maximumFractionDigits:d}); }
 function fmtDays(n)  { return Number.isInteger(n) ? String(n) : fmtD(n,1); }
-function onsiteLabel(days, reserveH) { return fmtDays(days)+(days===1?' Vor-Ort-Tag':' Vor-Ort-Tage')+' ('+fmtH(reserveH)+')'; }
-function bannerSentence(m) {
-  let s = 'Im '+MONTH_NAMES[m.month]+' bleiben dir '+fmtH(m.hAlloc)+' remote, verteilt auf '
-    + fmtDays(m.remoteDays)+(m.remoteDays===1 ? ' Remote-Arbeitstag.' : ' Remote-Arbeitstage.');
+function monthSentence(m, hpd, bookingPct, drO) {
+  const name = 'Im '+MONTH_NAMES[m.month]+(m.isCurrent ? ' noch' : '');
+  let s;
+  if (m.hPerDay === null) {
+    s = name+' sind keine Remote-Tage mehr verfügbar.';
+  } else {
+    s = name+': <strong>'+fmtD(m.hPerDay,1)+' h</strong> pro Tag an <strong>'+fmtDays(m.remoteDays)
+      + (m.remoteDays===1?' Remote-Tag':' Remote-Tagen')+'</strong>, zusammen <strong>'+fmtD(m.hAlloc,1)+' h</strong>. '
+      + 'Das entspricht '+fmt(m.hPerDay/hpd*100)+' % Auslastung bei '+fmt(bookingPct)+' % Buchung.';
+  }
   if (m.onsiteDays > 0) {
-    s += ' Dazu '+fmtDays(m.onsiteDays)
-      + (m.onsiteDays===1 ? ' reservierter Vor-Ort-Tag' : ' reservierte Vor-Ort-Tage')
-      + ' ('+fmtH(m.reserveH)+').';
+    s += ' Dazu <strong>'+fmtDays(m.onsiteDays)+(m.onsiteDays===1?' Vor-Ort-Tag':' Vor-Ort-Tage')+'</strong> für '+fmt(m.onsiteDays*drO)+' €.';
   }
   return s;
 }
-
-function distributeRemoteBudget(freeBudget, monthData, rR) {
-  const alloc = monthData.map(()=>0), locked = monthData.map(()=>false);
-  let left = freeBudget;
-  for (let iter = 0; iter < 10; iter++) {
-    const ul = monthData.map((_,i)=>i).filter(i=>!locked[i]);
-    if (!ul.length) break;
-    const tw = ul.reduce((s,i)=>s+monthData[i].weight, 0);
-    if (!tw) break;
-    let anyLock = false;
-    ul.forEach(i => {
-      const share = rR > 0 ? left*(monthData[i].weight/tw)/rR : 0;
-      if (share >= monthData[i].maxH) { alloc[i]=monthData[i].maxH; locked[i]=true; anyLock=true; }
-      else alloc[i] = Math.max(0, share);
-    });
-    if (!anyLock) break;
-    const lc = monthData.reduce((s,m,i)=>locked[i]?s+alloc[i]*rR:s, 0);
-    left = freeBudget - lc;
+function bannerSentence(m) {
+  let s = 'Im '+MONTH_NAMES[m.month]+' bleiben dir '+fmtH(m.hAlloc)+' remote, verteilt auf '
+    + fmtDays(m.remoteDays)+(m.remoteDays===1 ? ' Remote-Tag.' : ' Remote-Tage.');
+  if (m.onsiteDays > 0) {
+    s += ' Dazu '+fmtDays(m.onsiteDays)
+      + (m.onsiteDays===1 ? ' reservierter Vor-Ort-Tag.' : ' reservierte Vor-Ort-Tage.');
   }
-  return alloc;
+  return s;
 }
 
 function calc() {
@@ -375,6 +475,7 @@ function calc() {
     spentR += parseFloat(document.getElementById('sr'+i)?.value) || 0;
     spentO += parseFloat(document.getElementById('so'+i)?.value) || 0;
   });
+  // Update per-month cost display
   const rR_tmp = (parseFloat(document.getElementById('dayRateRemote').value)||0) / (parseFloat(document.getElementById('hoursPerDay').value)||8);
   const rO_tmp = (parseFloat(document.getElementById('dayRateOnsite').value)||0) / (parseFloat(document.getElementById('hoursPerDay').value)||8);
   QUARTER_MONTHS.forEach((_,i) => {
@@ -386,24 +487,28 @@ function calc() {
 
   document.getElementById('rateHint').textContent =
     '= '+fmtD(rR,2)+' € / '+fmtD(rO,2)+' € pro Stunde';
+  const bookingPct = parseFloat(document.getElementById('bookingPct').value) || 0;
+  const bookedHpd  = hpd * bookingPct / 100;
+  document.getElementById('bookingHint').textContent = '= '+fmtD(bookedHpd,1)+'h pro Tag';
 
   const spentCost = spentR*rR + spentO*rO;
 
-  const reserveByIdx = {}; let totalReserveH = 0;
+  // On-site work happens in whole days, billed at the on-site day rate.
+  const reserveByIdx = {}; let totalReserveDays = 0;
   QUARTER_MONTHS.forEach((_,i) => {
-    const cb = document.getElementById('rcb'+i), inp = document.getElementById('rh'+i);
+    const cb = document.getElementById('rcb'+i), inp = document.getElementById('rd'+i);
     if (cb && cb.classList.contains('checked') && inp) {
-      const h = parseFloat(inp.value)||0; reserveByIdx[i]=h; totalReserveH+=h;
+      const d = parseFloat(inp.value)||0; reserveByIdx[i]=d; totalReserveDays+=d;
     } else reserveByIdx[i]=0;
   });
-  const totalReserveCost = totalReserveH * rO;
+  const totalReserveCost = totalReserveDays * drO;
 
   QUARTER_MONTHS.forEach((_,i) => {
     const el = document.getElementById('rcost'+i);
-    if (el) el.textContent = fmt((reserveByIdx[i]||0)*rO)+' €';
+    if (el) el.textContent = fmt((reserveByIdx[i]||0)*drO)+' €';
   });
   const rTot = document.getElementById('reserveTotalDisplay');
-  if (rTot) rTot.textContent = fmtH(totalReserveH)+' · '+fmt(totalReserveCost)+' €';
+  if (rTot) rTot.textContent = fmtDays(totalReserveDays)+(totalReserveDays===1?' Tag':' Tage')+' · '+fmt(totalReserveCost)+' €';
 
   const note = document.getElementById('spentNote');
   if (spentR > 0 || spentO > 0) {
@@ -416,42 +521,103 @@ function calc() {
   const today = new Date(DEMO_TODAY); today.setHours(0,0,0,0);
 
   const months = QUARTER_MONTHS.map((q,i) => {
-    const availH  = parseFloat(document.getElementById('mh'+i)?.value)||0;
+    const availDays = parseFloat(document.getElementById('md'+i)?.value)||0;
     const mStart  = new Date(q.year,q.month,1), mEnd = new Date(q.year,q.month+1,0);
-    const isPast  = mEnd < today;
-    const isCurrent = !isPast && mStart <= today;
+    let isPast  = mEnd < today;
+    let isCurrent = !isPast && mStart <= today;
     const isFuture  = mStart > today;
     let workdaysTotal = countWorkdays(q.year, q.month);
     let workdaysRemaining = 0;
-    if (isCurrent) { const d=new Date(today); while(d<=mEnd){if(d.getDay()!==0&&d.getDay()!==6)workdaysRemaining++;d.setDate(d.getDate()+1);} }
+    // Count workdays from TOMORROW — today's hours are tracked via spent inputs,
+    // so the remaining allocation is for future days only.
+    if (isCurrent) { const d=new Date(today); d.setDate(d.getDate()+1); while(d<=mEnd){if(d.getDay()!==0&&d.getDay()!==6)workdaysRemaining++;d.setDate(d.getDate()+1);} }
     else if (isFuture) workdaysRemaining = countWorkdays(q.year,q.month);
-    const availHRemaining = workdaysTotal > 0 ? availH * (workdaysRemaining / workdaysTotal) : 0;
-    // Vor-Ort-Arbeit findet an ganzen Tagen statt: reservierte Stunden in Tage
-    // umrechnen und diese Tage aus den Remote-Arbeitstagen herausnehmen.
-    const reserveH   = reserveByIdx[i]||0;
-    const onsiteDays = hpd > 0 ? reserveH/hpd : 0;
-    const remoteDays = Math.max(0, workdaysRemaining - onsiteDays);
-    return { ...q, availH, availHRemaining, isPast, isCurrent, isFuture, workdaysRemaining, reserveH, onsiteDays, remoteDays };
+    // On the last workday of the month today itself counts as 1 effective day
+    const todayIsWorkday = isCurrent && today.getDay()!==0 && today.getDay()!==6 && today>=mStart && today<=mEnd;
+    const effectiveWorkdays = (workdaysRemaining===0 && todayIsWorkday) ? 1 : workdaysRemaining;
+    // Remaining available days: availDays pro rata to the remaining calendar workdays
+    // rounded to whole days, so the current month never shows fractional days
+    const availDaysRemaining = workdaysTotal > 0 ? Math.round(availDays * (effectiveWorkdays / workdaysTotal)) : 0;
+    // Wochenende am Monatsende: kein Arbeitstag mehr → Monat gilt als abgeschlossen (aber nicht wenn heute selbst noch Arbeitstag ist)
+    if (isCurrent && workdaysRemaining === 0 && !todayIsWorkday) { isPast = true; isCurrent = false; }
+    const mSpentR = parseFloat(document.getElementById('sr'+i)?.value)||0;
+    const mSpentO = parseFloat(document.getElementById('so'+i)?.value)||0;
+    // Reserved on-site days are taken out of the available days.
+    const onsiteDays = reserveByIdx[i]||0;
+    const remoteDays = Math.max(0, availDaysRemaining - onsiteDays);
+    return { ...q, availDays, availDaysRemaining, isPast, isCurrent, isFuture, workdaysRemaining, effectiveWorkdays, onsiteDays, remoteDays, mSpentR, mSpentO };
   });
 
-  const remaining  = months.filter(m=>!m.isPast);
+  // The free budget is spread evenly over all remaining remote days, so every
+  // month gets the same hours per remote day. On-site days lower that value.
   const freeBudget = budget - spentCost - totalReserveCost;
-  const monthData  = remaining.map(m=>({...m, maxH: m.remoteDays*hpd, weight: m.availHRemaining}));
-  const alloc      = distributeRemoteBudget(freeBudget, monthData, rR);
+  const totalRemoteDays = months.filter(m=>!m.isPast).reduce((s,m)=>s+m.remoteDays, 0);
+  const neededHpd = totalRemoteDays > 0 && rR > 0 ? Math.max(0, freeBudget/rR/totalRemoteDays) : null;
+  // A day cannot hold more than one day rate; anything above stays unused.
+  const remoteHpd = neededHpd !== null ? Math.min(neededHpd, hpd) : null;
 
-  let ri = 0;
+  // Plan at the start of the current month: ignores what was already worked this month,
+  // so extra hours this month do not lower their own target.
+  const curM = months.find(m=>m.isCurrent);
+  let startHpd = null;
+  if (curM && rR > 0) {
+    const spentBefore = months.filter(m=>m.isPast).reduce((s,m)=>s+m.mSpentR*rR+m.mSpentO*rO, 0);
+    const daysFromStart = Math.max(0, curM.availDays - curM.onsiteDays)
+      + months.filter(m=>m.isFuture).reduce((s,m)=>s+m.remoteDays, 0);
+    if (daysFromStart > 0) startHpd = Math.min(hpd, Math.max(0, (budget - spentBefore - totalReserveCost)/rR/daysFromStart));
+  }
+
   const finalMonths = months.map(m => {
     if (m.isPast) return {...m, hAlloc:0, budgetAlloc:0, hPerDay:null};
-    const hAlloc  = alloc[ri]||0;
-    const budgetAlloc = hAlloc*rR + m.reserveH*rO;
-    const hPerDay = m.remoteDays > 0 ? hAlloc/m.remoteDays : null;
-    ri++;
-    return {...m, hAlloc, budgetAlloc, hPerDay};
+    const hPerDay = m.remoteDays > 0 ? remoteHpd : null;
+    const hAlloc  = hPerDay !== null ? hPerDay*m.remoteDays : 0;
+    const budgetAlloc = hAlloc*rR + m.onsiteDays*drO;
+    // Target up to today: past available days of the current month × hours per remote day
+    const elapsedDays = m.isCurrent ? Math.max(0, m.availDays - m.availDaysRemaining) : 0;
+    const sollToDate  = m.isCurrent && startHpd !== null ? startHpd*elapsedDays : null;
+    return {...m, hAlloc, budgetAlloc, hPerDay, elapsedDays, sollToDate};
   });
 
+  // ── Status alerts ──
+  const alerts = [];
+  if (freeBudget < 0) {
+    alerts.push({ level:'danger', title:'Budget überschritten',
+      text:'Geleistete Stunden und reservierte Vor-Ort-Tage liegen '+fmt(-freeBudget)+' € über dem Budget von '+fmt(budget)+' €. '
+        + 'Für die restlichen Tage ist kein Budget mehr übrig.' });
+  }
+  const cur0 = finalMonths.find(m=>m.isCurrent);
+  if (cur0 && cur0.sollToDate !== null) {
+    const ist = cur0.mSpentR + cur0.mSpentO;
+    const over = ist - cur0.sollToDate;
+    if (over > 0.05) {
+      alerts.push({ level:'warn', title:'Im '+MONTH_NAMES[cur0.month]+' mehr geleistet als vorgesehen',
+        text:'Du hast '+fmtD(ist,1)+' h geleistet, vorgesehen waren bis heute '+fmtD(cur0.sollToDate,1)+' h ('
+          + fmtDays(cur0.elapsedDays)+(cur0.elapsedDays===1?' verfügbarer Tag':' verfügbare Tage')+' × '+fmtD(startHpd,1)+' h laut Plan zum Monatsbeginn). '
+          + 'Die '+fmtD(over,1)+' h zusätzlich gehen vom Restbudget ab, deshalb sinkt der Wert für alle kommenden Remote-Tage.' });
+    }
+  }
+  if (neededHpd !== null && neededHpd > hpd) {
+    const unused = freeBudget - totalRemoteDays*hpd*rR;
+    alerts.push({ level:'warn', title:'Budget nicht ausschöpfbar',
+      text:'Selbst mit '+fmtD(hpd,1)+' h an jedem verfügbaren Remote-Tag bleiben '+fmt(unused)+' € ungenutzt. '
+        + 'Trag mehr verfügbare Tage ein oder plane zusätzliche Vor-Ort-Tage, um das Budget auszuschöpfen.' });
+  } else if (neededHpd === null && freeBudget > 0) {
+    alerts.push({ level:'warn', title:'Budget nicht ausschöpfbar',
+      text:'Es sind keine verfügbaren Remote-Tage mehr eingetragen, dadurch bleiben '+fmt(freeBudget)+' € ungenutzt.' });
+  }
+  const ICONS = {
+    danger:'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10" cy="10" r="8"/><path d="M7 7l6 6M13 7l-6 6"/></svg>',
+    warn:  '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.5L18.5 17h-17z"/><path d="M10 8v4"/><circle cx="10" cy="14.5" r="0.6" fill="currentColor"/></svg>'
+  };
+  document.getElementById('alerts').innerHTML = alerts.map(a =>
+    `<div class="alert alert-${a.level}" role="${a.level==='danger'?'alert':'status'}">${ICONS[a.level]}
+      <div><div class="alert-title">${a.title}</div><div class="alert-text">${a.text}</div></div></div>`).join('');
+
+  // ── Today banner ──
   const isWeekend = today.getDay() === 0 || today.getDay() === 6;
   const cur = finalMonths.find(m=>m.isCurrent);
   if (isWeekend) {
+    // Find next workday
     const next = new Date(today);
     while (next.getDay() === 0 || next.getDay() === 6) next.setDate(next.getDate()+1);
     const nextLabel = next.toLocaleDateString('de-DE', {weekday:'long', day:'numeric', month:'long'});
@@ -459,7 +625,7 @@ function calc() {
     document.getElementById('bannerSub').textContent    = 'Nächster Arbeitstag: '+nextLabel;
     document.getElementById('bannerBudget').textContent = cur && cur.hPerDay !== null ? 'Freies Budget: '+fmt(freeBudget)+' €' : '';
   } else if (cur && cur.hPerDay !== null) {
-    document.getElementById('bannerHpd').textContent    = fmtD(cur.hPerDay,1)+'h';
+    document.getElementById('bannerHpd').textContent    = fmtD(cur.hPerDay,1)+' h';
     document.getElementById('bannerSub').textContent    = bannerSentence(cur);
     document.getElementById('bannerBudget').textContent = 'Verfügbares Budget: '+fmt(freeBudget)+' €';
   } else {
@@ -468,15 +634,18 @@ function calc() {
     document.getElementById('bannerBudget').textContent = '';
   }
 
+  // ── Stacked bar ──
   const pctS = budget>0 ? Math.min(100, spentCost/budget*100) : 0;
   const pctR = budget>0 ? Math.min(100-pctS, totalReserveCost/budget*100) : 0;
   const pctF = Math.max(0, 100-pctS-pctR);
 
+  // Monate mit aktiver Reservierung ermitteln
   const reserveMonthNames = QUARTER_MONTHS
     .map((q,i) => { const cb=document.getElementById('rcb'+i); return cb&&cb.classList.contains('checked') ? MONTH_NAMES[q.month] : null; })
     .filter(Boolean);
   const reserveMonthLabel = reserveMonthNames.length > 0 ? reserveMonthNames.join(' + ') : '–';
 
+  // ── Metrics – eine Karte ──
   document.getElementById('metricsTop').innerHTML = `
     <div class="metric metric-full">
       <div class="metric-label">Budget-Überblick</div>
@@ -497,7 +666,7 @@ function calc() {
           <span class="br-dot" style="background:#59B2A5"></span>
           <span class="br-label">Reserviert vor Ort</span>
           <span class="br-pct">${Math.round(pctR)}%</span>
-          <span class="br-val">${fmt(totalReserveCost)} € <span style="font-weight:400;color:var(--text-muted);font-size:0.7rem;">${totalReserveH>0?'('+reserveMonthLabel+')':''}</span></span>
+          <span class="br-val">${fmt(totalReserveCost)} € <span style="font-weight:400;color:var(--text-muted);font-size:0.7rem;">${totalReserveDays>0?'('+reserveMonthLabel+')':''}</span></span>
         </div>
         <div class="budget-row budget-row-available">
           <span class="br-dot" style="background:var(--border)"></span>
@@ -508,14 +677,25 @@ function calc() {
       </div>
     </div>`;
 
+  // ── Month cards ──
   const cards = finalMonths.map(m => {
-    if (m.isPast) return `<div class="month-card past-month">
+    if (m.isPast) {
+      const spentCostM = m.mSpentR*rR + m.mSpentO*rO;
+      const hasSpent = m.mSpentR > 0 || m.mSpentO > 0;
+      return `<div class="month-card past-month">
       <div>
         <div class="month-name">${MONTH_NAMES[m.month]} ${m.year} <span class="month-tag tag-past">Abgeschlossen</span></div>
-        <div class="month-row1"><span><strong>${fmtH(m.availH)}</strong> verfügbar</span></div>
+        <div class="month-row1">
+          ${m.mSpentR > 0 ? `<span><strong>${fmtH(m.mSpentR)}</strong> remote genutzt</span>` : ''}
+          ${m.mSpentO > 0 ? `<span><strong>${fmtH(m.mSpentO)}</strong> vor Ort genutzt</span>` : ''}
+          ${!hasSpent ? `<span><strong>0h</strong> genutzt</span>` : ''}
+          <span style="color:var(--text-muted)">${fmtDays(m.availDays)} Tage verfügbar</span>
+        </div>
+        ${hasSpent ? `<div class="month-row2"><span>Kosten: <strong>${fmt(spentCostM)} €</strong></span></div>` : ''}
       </div>
       <div class="total-hpd"><div class="hpd-value" style="color:var(--text-muted)">–</div><div class="hpd-label">h/Tag</div></div>
     </div>`;
+    }
 
     const hpdr  = m.hPerDay !== null ? m.hPerDay : 0;
     const tag   = m.isCurrent?'tag-current':'tag-future';
@@ -525,19 +705,19 @@ function calc() {
     return `<div class="month-card ${cc}">
       <div>
         <div class="month-name">${MONTH_NAMES[m.month]} ${m.year} <span class="month-tag ${tag}">${label}</span></div>
-        <div class="month-row1">
-          <span><strong>${fmtH(m.hAlloc)}</strong> remote</span>
-          ${m.reserveH>0?`<span><strong>${onsiteLabel(m.onsiteDays, m.reserveH)}</strong> geplant</span>`:''}
-          <span><strong>${m.workdaysRemaining}</strong> Arbeitstage</span>
-        </div>
+        <p class="month-text">${monthSentence(m, hpd, bookingPct, drO)}</p>
         <div class="month-row2">
           <span>Budget gesamt: <strong>${fmt(m.budgetAlloc)} €</strong></span>
+          ${m.sollToDate!==null?`<span>Bis heute: <strong>${fmtD(m.mSpentR+m.mSpentO,1)} h</strong> geleistet, vorgesehen <strong>${fmtD(m.sollToDate,1)} h</strong></span>`:''}
         </div>
       </div>
       <div class="total-hpd">
         <div class="hpd-value">${m.hPerDay!==null?fmtD(hpdr,1):'–'}</div>
         <div class="hpd-label">h/Remote-Tag</div>
-        <div class="hpd-sollwert">Sollwert für Budgetrahmen</div>
+        ${m.hPerDay!==null && hpd>0 ? `<div class="util" title="Auslastung pro Remote-Tag; die Markierung zeigt deinen Buchungsumfang">
+          <div class="util-bar"><div class="util-fill" style="width:${Math.min(100,hpdr/hpd*100).toFixed(1)}%"></div><div class="util-mark" style="left:calc(${Math.min(100,bookingPct).toFixed(1)}% - 1px)"></div></div>
+          <div class="util-label">${fmt(hpdr/hpd*100)} % Auslastung<br>gebucht ${fmt(bookingPct)} %</div>
+        </div>` : ''}
       </div>
     </div>`;
   });
@@ -545,49 +725,196 @@ function calc() {
   document.getElementById('results').style.display = 'block';
 }
 
+// ── localStorage ──────────────────────────────────────────────
+const LS_KEY = 'arbeitszeit_kalkulator_v3';
+
+function saveState() {} // demo: nothing is stored
+
+
 // ── Demo-Init ─────────────────────────────────────────────────
 (function() {
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
   document.getElementById('versionLabel').textContent = 'v' + VERSION;
-  document.getElementById('startDate').value     = '2026-01-01';
-  document.getElementById('endDate').value       = '2026-03-31';
-  document.getElementById('budget').value        = '45600';
-  document.getElementById('dayRateRemote').value = '800';
-  document.getElementById('dayRateOnsite').value = '900';
-  document.getElementById('hoursPerDay').value   = '8';
+  set('startDate', '2026-01-01');
+  set('endDate',   '2026-03-31');
+  set('budget', '30000');
+  set('dayRateRemote', '1000');
+  set('dayRateOnsite', '1100');
+  set('hoursPerDay', '8');
+  set('bookingPct', '50');
 
   initMonths();
 
-  // Verfügbare Stunden (angepasst für Feiertage/Urlaub)
-  const mh0 = document.getElementById('mh0'); if (mh0) mh0.value = '160';
-  const mh1 = document.getElementById('mh1'); if (mh1) mh1.value = '136';
-  const mh2 = document.getElementById('mh2'); if (mh2) mh2.value = '160';
+  // Available days after holidays, vacation and trainings
+  set('md0', '19'); set('md1', '17'); set('md2', '20');
 
-  // Geleistete Stunden Januar: leichtes Überschreiten des Tagessolls
-  const sr0 = document.getElementById('sr0'); if (sr0) sr0.value = '165';
-  const so0 = document.getElementById('so0'); if (so0) so0.value = '8';
+  // January done, including one on-site day; February: already above target
+  set('sr0', '84'); set('so0', '8');
+  set('sr1', '40');
 
-  // Februar: Vor-Ort-Einsatz reserviert (2 Tage = 16h)
-  const cb1  = document.getElementById('rcb1');
-  const row1 = document.getElementById('rrow1');
-  const inp1 = document.getElementById('rh1');
-  if (cb1) {
-    cb1.classList.add('checked');
-    if (row1) row1.classList.remove('inactive');
-    if (inp1) { inp1.value = '16'; inp1.style.opacity = '1'; inp1.style.pointerEvents = 'auto'; }
-  }
+  // March: two on-site days reserved
+  toggleReserve(2);
+  set('rd2', '2');
 
   calc();
 })();
 
-['budget','dayRateRemote','dayRateOnsite'].forEach(id => {
-  const el = document.getElementById(id);
-  if (el) el.addEventListener('input', calc);
+['budget','dayRateRemote','dayRateOnsite','hoursPerDay','bookingPct'].forEach(id => {
+  const el=document.getElementById(id);
+  if (el) el.addEventListener('input', ()=>{ calc(); saveState(); });
 });
-document.getElementById('hoursPerDay').addEventListener('input', () => { renderMonthInputs(); calc(); });
-document.getElementById('startDate').addEventListener('change', () => { initMonths(); calc(); });
-document.getElementById('endDate').addEventListener('change',   () => { initMonths(); calc(); });
-document.getElementById('monthInputs').addEventListener('input', calc);
-document.getElementById('reserveMonthInputs').addEventListener('input', calc);
+document.getElementById('startDate').addEventListener('change', ()=>{ initMonths(); calc(); saveState(); });
+document.getElementById('endDate').addEventListener('change',   ()=>{ initMonths(); calc(); saveState(); });
+document.getElementById('monthInputs').addEventListener('input', ()=>{ calc(); saveState(); });
+document.getElementById('reserveMonthInputs').addEventListener('input', ()=>{ calc(); saveState(); });
+
+// ── Toast ──────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('visible');
+  setTimeout(() => t.classList.remove('visible'), 2500);
+}
+
+// ── Vertragsverlängerung ───────────────────────────────────
+function openRenewModal() {
+  const startVal = document.getElementById('startDate').value;
+  const endVal   = document.getElementById('endDate').value;
+  const drR = parseFloat(document.getElementById('dayRateRemote').value) || 0;
+  const drO = parseFloat(document.getElementById('dayRateOnsite').value) || 0;
+  const hpd = parseFloat(document.getElementById('hoursPerDay').value) || 8;
+  const fmtDate = d => d ? new Date(d+'T00:00:00').toLocaleDateString('de-DE') : '–';
+  document.getElementById('rnCurrentPeriod').textContent = fmtDate(startVal) + ' – ' + fmtDate(endVal);
+
+  const rR = drR / hpd, rO = drO / hpd;
+  let spentCost = 0, reserveCost = 0;
+  QUARTER_MONTHS.forEach((_,i) => {
+    spentCost  += (parseFloat(document.getElementById('sr'+i)?.value)||0) * rR;
+    spentCost  += (parseFloat(document.getElementById('so'+i)?.value)||0) * rO;
+    const cb = document.getElementById('rcb'+i);
+    if (cb && cb.classList.contains('checked'))
+      reserveCost += (parseFloat(document.getElementById('rd'+i)?.value)||0) * rO * hpd; // days × day rate
+  });
+  document.getElementById('rnSpentDisplay').textContent = fmt(spentCost + reserveCost);
+
+  let newEnd = endVal ? new Date(endVal+'T00:00:00') : new Date();
+  newEnd.setMonth(newEnd.getMonth() + 4);
+  newEnd = new Date(newEnd.getFullYear(), newEnd.getMonth(), 0);
+  document.getElementById('rnNewEnd').value       = newEnd.toISOString().split('T')[0];
+  document.getElementById('rnRateRemote').value   = drR;
+  document.getElementById('rnRateOnsite').value   = drO;
+  document.getElementById('rnNewBudget').value    = '';
+  document.querySelector('input[name=rnVariant][value=clean]').checked = true;
+  updateRnPreview();
+  document.getElementById('renewOverlay').classList.add('open');
+}
+function closeRenewModal() {
+  document.getElementById('renewOverlay').classList.remove('open');
+}
+function updateRnPreview() {
+  const newBudget     = parseFloat(document.getElementById('rnNewBudget').value) || 0;
+  const newRateRemote = parseFloat(document.getElementById('rnRateRemote').value) || 0;
+  const newRateOnsite = parseFloat(document.getElementById('rnRateOnsite').value) || 0;
+  const hpd           = parseFloat(document.getElementById('hoursPerDay').value) || 8;
+  const rR = newRateRemote / hpd, rO = newRateOnsite / hpd;
+  let spentCost = 0, reserveCost = 0;
+  QUARTER_MONTHS.forEach((_,i) => {
+    spentCost  += (parseFloat(document.getElementById('sr'+i)?.value)||0) * rR;
+    spentCost  += (parseFloat(document.getElementById('so'+i)?.value)||0) * rO;
+    const cb = document.getElementById('rcb'+i);
+    if (cb && cb.classList.contains('checked'))
+      reserveCost += (parseFloat(document.getElementById('rd'+i)?.value)||0) * rO * hpd; // days × day rate
+  });
+  const oldBudget = parseFloat(document.getElementById('budget').value) || 0;
+  const rest = Math.max(0, oldBudget - spentCost - reserveCost);
+  document.getElementById('rnRestDisplay').textContent       = fmt(rest);
+  document.getElementById('rnPreviewClean').textContent      = fmt(newBudget) + ' €';
+  document.getElementById('rnPreviewCarryover').textContent  = fmt(rest + newBudget) + ' €';
+}
+function confirmRenew() {
+  const newEndVal     = document.getElementById('rnNewEnd').value;
+  const newBudget     = parseFloat(document.getElementById('rnNewBudget').value);
+  const newRateRemote = parseFloat(document.getElementById('rnRateRemote').value);
+  const newRateOnsite = parseFloat(document.getElementById('rnRateOnsite').value);
+  const carryover     = document.querySelector('input[name=rnVariant]:checked').value === 'carryover';
+  const endVal        = document.getElementById('endDate').value;
+  if (!newEndVal || !newBudget || newBudget <= 0) { alert('Bitte neues Vertragsende und Budget angeben.'); return; }
+  if (newEndVal <= endVal) { alert('Das neue Vertragsende muss nach dem aktuellen Vertragsende liegen.'); return; }
+
+  const hpd = parseFloat(document.getElementById('hoursPerDay').value) || 8;
+  const rR = newRateRemote / hpd, rO = newRateOnsite / hpd;
+  let spentCost = 0, reserveCost = 0;
+  QUARTER_MONTHS.forEach((_,i) => {
+    spentCost  += (parseFloat(document.getElementById('sr'+i)?.value)||0) * rR;
+    spentCost  += (parseFloat(document.getElementById('so'+i)?.value)||0) * rO;
+    const cb = document.getElementById('rcb'+i);
+    if (cb && cb.classList.contains('checked'))
+      reserveCost += (parseFloat(document.getElementById('rd'+i)?.value)||0) * rO * hpd; // days × day rate
+  });
+  const oldBudget = parseFloat(document.getElementById('budget').value) || 0;
+  const newTotalBudget = carryover ? oldBudget + newBudget : spentCost + reserveCost + newBudget;
+
+  document.getElementById('budget').value         = Math.round(newTotalBudget);
+  document.getElementById('dayRateRemote').value  = newRateRemote;
+  document.getElementById('dayRateOnsite').value  = newRateOnsite;
+  document.getElementById('endDate').value        = newEndVal;
+
+  initMonths();
+  saveState();
+  calc();
+  closeRenewModal();
+  showToast('Vertrag verlängert ✓');
+}
 </script>
+
+<div id="renewOverlay">
+  <form id="renewModal" autocomplete="off" onsubmit="return false;">
+    <div class="rn-title">Vertrag verlängern</div>
+    <div class="rn-meta">
+      <span>Aktueller Zeitraum: <strong id="rnCurrentPeriod">–</strong></span>
+      <span>Davon verbraucht: <strong id="rnSpentDisplay">–</strong> €</span>
+    </div>
+    <div class="rn-row2">
+      <div>
+        <label>Neues Vertragsende</label>
+        <input type="date" id="rnNewEnd" oninput="updateRnPreview()">
+      </div>
+      <div>
+        <label>Neues Vertragsbudget (€)</label>
+        <input type="number" id="rnNewBudget" step="100" placeholder="30000" oninput="updateRnPreview()" autocomplete="off">
+      </div>
+    </div>
+    <div class="rn-row2">
+      <div>
+        <label>Tagessatz Remote (€)</label>
+        <input type="number" id="rnRateRemote" step="10" oninput="updateRnPreview()" autocomplete="off">
+      </div>
+      <div>
+        <label>Tagessatz Vor Ort (€)</label>
+        <input type="number" id="rnRateOnsite" step="10" oninput="updateRnPreview()" autocomplete="off">
+      </div>
+    </div>
+    <div class="rn-var-label">Wie wird das Restbudget behandelt?</div>
+    <label class="rn-option">
+      <input type="radio" name="rnVariant" value="clean" checked onchange="updateRnPreview()">
+      <div>
+        <div class="rn-opt-title">Sauber starten</div>
+        <div class="rn-opt-sub">Altes Budget gilt als abgeschlossen — verfügbar: <strong id="rnPreviewClean">–</strong></div>
+      </div>
+    </label>
+    <label class="rn-option">
+      <input type="radio" name="rnVariant" value="carryover" onchange="updateRnPreview()">
+      <div>
+        <div class="rn-opt-title">Restbudget übernehmen</div>
+        <div class="rn-opt-sub"><strong id="rnRestDisplay">–</strong> € unverbraucht — verfügbar: <strong id="rnPreviewCarryover">–</strong></div>
+      </div>
+    </label>
+    <div class="rn-hint">Alle bisherigen Stunden bleiben erhalten.</div>
+    <div class="rn-actions">
+      <button class="rn-btn-cancel" onclick="closeRenewModal()">Abbrechen</button>
+      <button class="rn-btn-confirm" onclick="confirmRenew()">Verlängern →</button>
+    </div>
+  </form>
+</div>
 </body>
 </html>
