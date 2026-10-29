@@ -28,6 +28,7 @@
     --warn-bg: #fff8e6; --warn-text: #8a6200;
     --ok-bg: #e8f6f4; --ok-text: #246b61;
     --danger-bg: #fef0f0; --danger-text: #b83232;
+    --warn-strong: #d97706; --danger-strong: #dc2626;
     --shadow-sm: 0 1px 3px rgba(89,178,165,0.08);
     --radius: 12px; --radius-sm: 8px;
   }
@@ -120,6 +121,26 @@
   .badge-warn   { background:var(--warn-bg);   color:var(--warn-text); }
   .badge-danger { background:var(--danger-bg); color:var(--danger-text); }
   .badge-past   { background:var(--surface);   color:var(--text-muted); }
+
+  /* Status alerts: color reinforces, icon + title + reason carry the meaning */
+  .alerts { display:flex; flex-direction:column; gap:8px; margin-bottom:12px; }
+  .alerts:empty { display:none; }
+  .alert { display:grid; grid-template-columns:20px 1fr; gap:10px; align-items:start; padding:12px 14px; border-radius:var(--radius-sm); border:1px solid; border-left-width:4px; }
+  .alert svg { width:20px; height:20px; margin-top:1px; }
+  .alert-title { font-size:0.85rem; font-weight:600; line-height:1.3; }
+  .alert-text  { font-size:0.78rem; line-height:1.45; margin-top:2px; color:var(--text-primary); }
+  .alert-danger { background:var(--danger-bg); border-color:#f5c2c2; border-left-color:var(--danger-strong); }
+  .alert-danger .alert-title, .alert-danger svg { color:var(--danger-strong); }
+  .alert-warn   { background:var(--warn-bg); border-color:#f3dfa8; border-left-color:var(--warn-strong); }
+  .alert-warn .alert-title, .alert-warn svg { color:var(--warn-text); }
+
+  .month-text { font-size:0.82rem; line-height:1.45; color:var(--text-secondary); }
+  .month-text strong { color:var(--text-primary); font-weight:600; }
+  .util { width:110px; margin-top:8px; }
+  .util-bar { position:relative; height:6px; border-radius:3px; background:var(--border-light); }
+  .util-fill { height:100%; border-radius:3px; background:var(--teal); }
+  .util-mark { position:absolute; top:-3px; width:2px; height:12px; background:var(--text-secondary); border-radius:1px; }
+  .util-label { font-size:0.65rem; color:var(--text-muted); margin-top:5px; text-align:right; line-height:1.3; }
 
   /* Reserve rows */
   /* Spent table */
@@ -252,6 +273,7 @@
 
   <div class="results" id="results" style="display:none">
     <p class="results-header">Ergebnis</p>
+    <div class="alerts" id="alerts"></div>
     <div class="metric-grid" id="metricsTop"></div>
     <div class="month-cards" id="monthCards"></div>
   </div>
@@ -259,7 +281,7 @@
 </div>
 
 <script>
-const VERSION = '1.2';
+const VERSION = '1.3';
 const MONTH_NAMES = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 let QUARTER_MONTHS = [];
 
@@ -362,7 +384,7 @@ function toggleReserve(i) {
   row.classList.toggle('inactive', !active);
   inp.style.opacity       = active ? '1'    : '0.35';
   inp.style.pointerEvents = active ? 'auto' : 'none';
-  if (!active) inp.value = 0;
+  inp.value = active ? Math.max(1, parseFloat(inp.value)||0) : 0;
   calc(); saveState();
 }
 
@@ -378,7 +400,7 @@ function renderReserveInputs() {
         <svg width="10" height="10" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="white" stroke-width="2.5" fill="none"/></svg>
       </div>
       <span class="reserve-month-label">${MONTH_NAMES[q.month]} ${q.year}</span>
-      <input type="number" id="rd${i}" value="1" step="1" min="0" style="opacity:0.35;pointer-events:none;" oninput="calc();saveState()" autocomplete="off">
+      <input type="number" id="rd${i}" value="0" step="1" min="0" style="opacity:0.35;pointer-events:none;" oninput="calc();saveState()" autocomplete="off">
       <span class="reserve-cost-label" id="rcost${i}">0 €</span>
     </div>`;
   });
@@ -405,10 +427,24 @@ function renderSpentInputs() {
 }
 
 function fmt(n)      { return n.toLocaleString('de-DE', {minimumFractionDigits:0, maximumFractionDigits:0}); }
-function fmtH(n)     { return n.toFixed(1)+'h'; }
+function fmtH(n)     { return fmtD(n,1)+' h'; }
 function fmtD(n, d)  { return n.toLocaleString('de-DE', {minimumFractionDigits:d, maximumFractionDigits:d}); }
 function fmtDays(n)  { return Number.isInteger(n) ? String(n) : fmtD(n,1); }
-function onsiteLabel(days, cost) { return fmtDays(days)+(days===1?' Vor-Ort-Tag':' Vor-Ort-Tage')+' ('+fmt(cost)+' €)'; }
+function monthSentence(m, hpd, bookingPct, drO) {
+  const name = 'Im '+MONTH_NAMES[m.month]+(m.isCurrent ? ' noch' : '');
+  let s;
+  if (m.hPerDay === null) {
+    s = name+' sind keine Remote-Tage mehr verfügbar.';
+  } else {
+    s = name+': <strong>'+fmtD(m.hPerDay,1)+' h</strong> pro Tag an <strong>'+fmtDays(m.remoteDays)
+      + (m.remoteDays===1?' Remote-Tag':' Remote-Tagen')+'</strong>, zusammen <strong>'+fmtD(m.hAlloc,1)+' h</strong>. '
+      + 'Das entspricht '+fmt(m.hPerDay/hpd*100)+' % Auslastung bei '+fmt(bookingPct)+' % Buchung.';
+  }
+  if (m.onsiteDays > 0) {
+    s += ' Dazu <strong>'+fmtDays(m.onsiteDays)+(m.onsiteDays===1?' Vor-Ort-Tag':' Vor-Ort-Tage')+'</strong> für '+fmt(m.onsiteDays*drO)+' €.';
+  }
+  return s;
+}
 function bannerSentence(m) {
   let s = 'Im '+MONTH_NAMES[m.month]+' bleiben dir '+fmtH(m.hAlloc)+' remote, verteilt auf '
     + fmtDays(m.remoteDays)+(m.remoteDays===1 ? ' Remote-Tag.' : ' Remote-Tage.');
@@ -491,7 +527,8 @@ function calc() {
     const todayIsWorkday = isCurrent && today.getDay()!==0 && today.getDay()!==6 && today>=mStart && today<=mEnd;
     const effectiveWorkdays = (workdaysRemaining===0 && todayIsWorkday) ? 1 : workdaysRemaining;
     // Remaining available days: availDays pro rata to the remaining calendar workdays
-    const availDaysRemaining = workdaysTotal > 0 ? availDays * (effectiveWorkdays / workdaysTotal) : 0;
+    // rounded to whole days, so the current month never shows fractional days
+    const availDaysRemaining = workdaysTotal > 0 ? Math.round(availDays * (effectiveWorkdays / workdaysTotal)) : 0;
     // Wochenende am Monatsende: kein Arbeitstag mehr → Monat gilt als abgeschlossen (aber nicht wenn heute selbst noch Arbeitstag ist)
     if (isCurrent && workdaysRemaining === 0 && !todayIsWorkday) { isPast = true; isCurrent = false; }
     const mSpentR = parseFloat(document.getElementById('sr'+i)?.value)||0;
@@ -506,15 +543,66 @@ function calc() {
   // month gets the same hours per remote day. On-site days lower that value.
   const freeBudget = budget - spentCost - totalReserveCost;
   const totalRemoteDays = months.filter(m=>!m.isPast).reduce((s,m)=>s+m.remoteDays, 0);
-  const remoteHpd = totalRemoteDays > 0 && rR > 0 ? Math.max(0, freeBudget/rR/totalRemoteDays) : null;
+  const neededHpd = totalRemoteDays > 0 && rR > 0 ? Math.max(0, freeBudget/rR/totalRemoteDays) : null;
+  // A day cannot hold more than one day rate; anything above stays unused.
+  const remoteHpd = neededHpd !== null ? Math.min(neededHpd, hpd) : null;
+
+  // Plan at the start of the current month: ignores what was already worked this month,
+  // so extra hours this month do not lower their own target.
+  const curM = months.find(m=>m.isCurrent);
+  let startHpd = null;
+  if (curM && rR > 0) {
+    const spentBefore = months.filter(m=>m.isPast).reduce((s,m)=>s+m.mSpentR*rR+m.mSpentO*rO, 0);
+    const daysFromStart = Math.max(0, curM.availDays - curM.onsiteDays)
+      + months.filter(m=>m.isFuture).reduce((s,m)=>s+m.remoteDays, 0);
+    if (daysFromStart > 0) startHpd = Math.min(hpd, Math.max(0, (budget - spentBefore - totalReserveCost)/rR/daysFromStart));
+  }
 
   const finalMonths = months.map(m => {
     if (m.isPast) return {...m, hAlloc:0, budgetAlloc:0, hPerDay:null};
     const hPerDay = m.remoteDays > 0 ? remoteHpd : null;
     const hAlloc  = hPerDay !== null ? hPerDay*m.remoteDays : 0;
     const budgetAlloc = hAlloc*rR + m.onsiteDays*drO;
-    return {...m, hAlloc, budgetAlloc, hPerDay};
+    // Target up to today: past available days of the current month × hours per remote day
+    const elapsedDays = m.isCurrent ? Math.max(0, m.availDays - m.availDaysRemaining) : 0;
+    const sollToDate  = m.isCurrent && startHpd !== null ? startHpd*elapsedDays : null;
+    return {...m, hAlloc, budgetAlloc, hPerDay, elapsedDays, sollToDate};
   });
+
+  // ── Status alerts ──
+  const alerts = [];
+  if (freeBudget < 0) {
+    alerts.push({ level:'danger', title:'Budget überschritten',
+      text:'Geleistete Stunden und reservierte Vor-Ort-Tage liegen '+fmt(-freeBudget)+' € über dem Budget von '+fmt(budget)+' €. '
+        + 'Für die restlichen Tage ist kein Budget mehr übrig.' });
+  }
+  const cur0 = finalMonths.find(m=>m.isCurrent);
+  if (cur0 && cur0.sollToDate !== null) {
+    const ist = cur0.mSpentR + cur0.mSpentO;
+    const over = ist - cur0.sollToDate;
+    if (over > 0.05) {
+      alerts.push({ level:'warn', title:'Im '+MONTH_NAMES[cur0.month]+' mehr geleistet als vorgesehen',
+        text:'Du hast '+fmtD(ist,1)+' h geleistet, vorgesehen waren bis heute '+fmtD(cur0.sollToDate,1)+' h ('
+          + fmtDays(cur0.elapsedDays)+(cur0.elapsedDays===1?' verfügbarer Tag':' verfügbare Tage')+' × '+fmtD(startHpd,1)+' h laut Plan zum Monatsbeginn). '
+          + 'Die '+fmtD(over,1)+' h zusätzlich gehen vom Restbudget ab, deshalb sinkt der Wert für alle kommenden Remote-Tage.' });
+    }
+  }
+  if (neededHpd !== null && neededHpd > hpd) {
+    const unused = freeBudget - totalRemoteDays*hpd*rR;
+    alerts.push({ level:'warn', title:'Budget nicht ausschöpfbar',
+      text:'Selbst mit '+fmtD(hpd,1)+' h an jedem verfügbaren Remote-Tag bleiben '+fmt(unused)+' € ungenutzt. '
+        + 'Trag mehr verfügbare Tage ein oder plane zusätzliche Vor-Ort-Tage, um das Budget auszuschöpfen.' });
+  } else if (neededHpd === null && freeBudget > 0) {
+    alerts.push({ level:'warn', title:'Budget nicht ausschöpfbar',
+      text:'Es sind keine verfügbaren Remote-Tage mehr eingetragen, dadurch bleiben '+fmt(freeBudget)+' € ungenutzt.' });
+  }
+  const ICONS = {
+    danger:'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10" cy="10" r="8"/><path d="M7 7l6 6M13 7l-6 6"/></svg>',
+    warn:  '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2.5L18.5 17h-17z"/><path d="M10 8v4"/><circle cx="10" cy="14.5" r="0.6" fill="currentColor"/></svg>'
+  };
+  document.getElementById('alerts').innerHTML = alerts.map(a =>
+    `<div class="alert alert-${a.level}" role="${a.level==='danger'?'alert':'status'}">${ICONS[a.level]}
+      <div><div class="alert-title">${a.title}</div><div class="alert-text">${a.text}</div></div></div>`).join('');
 
   // ── Today banner ──
   const isWeekend = today.getDay() === 0 || today.getDay() === 6;
@@ -528,7 +616,7 @@ function calc() {
     document.getElementById('bannerSub').textContent    = 'Nächster Arbeitstag: '+nextLabel;
     document.getElementById('bannerBudget').textContent = cur && cur.hPerDay !== null ? 'Freies Budget: '+fmt(freeBudget)+' €' : '';
   } else if (cur && cur.hPerDay !== null) {
-    document.getElementById('bannerHpd').textContent    = fmtD(cur.hPerDay,1)+'h';
+    document.getElementById('bannerHpd').textContent    = fmtD(cur.hPerDay,1)+' h';
     document.getElementById('bannerSub').textContent    = bannerSentence(cur);
     document.getElementById('bannerBudget').textContent = 'Verfügbares Budget: '+fmt(freeBudget)+' €';
   } else {
@@ -608,19 +696,19 @@ function calc() {
     return `<div class="month-card ${cc}">
       <div>
         <div class="month-name">${MONTH_NAMES[m.month]} ${m.year} <span class="month-tag ${tag}">${label}</span></div>
-        <div class="month-row1">
-          <span><strong>${fmtH(m.hAlloc)}</strong> remote</span>
-          ${m.onsiteDays>0?`<span><strong>${onsiteLabel(m.onsiteDays, m.onsiteDays*drO)}</strong> geplant</span>`:''}
-          <span><strong>${fmtDays(Math.round(m.remoteDays*10)/10)}</strong> Remote-Tage</span>
-        </div>
+        <p class="month-text">${monthSentence(m, hpd, bookingPct, drO)}</p>
         <div class="month-row2">
           <span>Budget gesamt: <strong>${fmt(m.budgetAlloc)} €</strong></span>
+          ${m.sollToDate!==null?`<span>Bis heute: <strong>${fmtD(m.mSpentR+m.mSpentO,1)} h</strong> geleistet, vorgesehen <strong>${fmtD(m.sollToDate,1)} h</strong></span>`:''}
         </div>
       </div>
       <div class="total-hpd">
         <div class="hpd-value">${m.hPerDay!==null?fmtD(hpdr,1):'–'}</div>
         <div class="hpd-label">h/Remote-Tag</div>
-        <div class="hpd-sollwert">${m.hPerDay!==null && hpd>0 ? fmt(hpdr/hpd*100)+' % (gebucht '+fmt(bookingPct)+' %)' : 'Sollwert für Budgetrahmen'}</div>
+        ${m.hPerDay!==null && hpd>0 ? `<div class="util" title="Auslastung pro Remote-Tag; die Markierung zeigt deinen Buchungsumfang">
+          <div class="util-bar"><div class="util-fill" style="width:${Math.min(100,hpdr/hpd*100).toFixed(1)}%"></div><div class="util-mark" style="left:calc(${Math.min(100,bookingPct).toFixed(1)}% - 1px)"></div></div>
+          <div class="util-label">${fmt(hpdr/hpd*100)} % Auslastung<br>gebucht ${fmt(bookingPct)} %</div>
+        </div>` : ''}
       </div>
     </div>`;
   });
